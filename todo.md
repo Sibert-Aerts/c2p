@@ -33,7 +33,7 @@ This feature is mandatory and entails the definition and calling of functions an
   1. (optional) Check whether all paths in a function body end with a return statement (not required for procedures that return `void`).
 
 7. **Arrays (mandatory)**  
-Array variables should be s(optional)upported, as well as operations on individual array elements. Mind the correct use of dimensions and indices. Support for 1-dimensional static arrays is a mandatory feature; support for multi-dimensional arrays is optional, as well as dynamic arrays and assignments of complete arrays or array rows.
+Array variables should be supported, as well as operations on individual array elements. Mind the correct use of dimensions and indices. Support for 1-dimensional static arrays is a mandatory feature; support for multi-dimensional arrays is optional, as well as dynamic arrays and assignments of complete arrays or array rows.
   1. (optional) multi-dimensional arrays.
   1. (optional) assignments of complete arrays or array rows in case of multi-dimensional arrays.
   1. (optional) dynamic arrays.
