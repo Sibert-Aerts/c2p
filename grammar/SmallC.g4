@@ -1,13 +1,14 @@
 grammar SmallC;
 
+program: externalDeclaration*;
 externalDeclaration: functionDefinition | declaration;
 functionDefinition: typeSpecifier Identifier '(' parameterDeclarationList ')' compoundStatement;
 parameterDeclarationList: parameterDeclaration (',' parameterDeclaration)*;
 parameterDeclaration: typeSpecifier Identifier;
 compoundStatement: '{' (variableDeclaration | statement)* '}';
 variableDeclaration: typeSpecifier variableInitList;
-variableInit: variableInit (',' variableInit)*;
-variableInit: Identifier ('=' expression)?;
+variableInitList: variableInit (',' variableInit)*;
+variableInit: Identifier ('=' assignment)?;
 statement: compoundStatement | condStatement | whileStatement | breakStatement | continueStatement | returnStatement | exprStatement;
 condStatement: 'if' '(' expression ')' statement ('else' statement)?;
 whileStatement: 'while' '(' expression ')' statement;
@@ -16,22 +17,54 @@ continueStatement: 'continue' ';';
 returnStatement: 'return' expression ';';
 exprStatement: expression? ';';
 typeSpecifier: 'void' | 'char' | 'int' | 'float';
+typeQualifier: 'const';
 
-expression: Identifier assignmentOperator expression | condition;
+declaration
+    :   declarationSpecifiers initDeclaratorList? ';'
+    ;
+
+declarationSpecifiers: (typeSpecifier | typeQualifier)+;
+
+initDeclaratorList
+    :   initDeclarator
+    |   initDeclaratorList ',' initDeclarator
+    ;
+
+initDeclarator
+    :   declarator ('=' assignment)?
+    ;
+
+declarator
+    :   pointer? directDeclarator
+    ;
+
+directDeclarator
+    :   Identifier
+    |   '(' declarator ')'
+    |   directDeclarator '[' assignment? ']'
+    ;
+
+pointer
+    :   '*' typeQualifier*
+    |   '*' typeQualifier* pointer
+    ;
+
+expression: assignment | expression ',' assignment;
+assignment: Identifier assignmentOperator expression | condition;
 condition: disjunction | disjunction '?' expression ':' condition;
 disjunction: conjunction | disjunction '||' conjunction;
 conjunction: comparison | conjunction '&&' comparison;
 comparison: relation | relation ('==' | '!=') relation;
-relation: sum | sum ('<' | '>' | '<=' | '>=') sum;
-sum: sum '+' term | sum '-' term | term;
-term: term '*' cast | term '/' cast | term '%' cast | cast;
+relation: plus | plus ('<' | '>' | '<=' | '>=') plus;
+plus: plus '+' times | plus '-' times | times;
+times: times '*' cast | times '/' cast | times '%' cast | cast;
 cast: unary | '(' typeSpecifier ')' cast;
-unary: postfix | ('++' | '--') unary | [&*!+-] cast;
+unary: postfix | ('++' | '--') unary | ('&' | '*' | '!' | '+' | '-') cast;
 postfix: primary | postfix ('[' expression ']' | '(' expressionList? ')' | ('.' | '->') Identifier | ('++' | '--'));
 primary: constant | Identifier | '(' expression ')';
 constant: FloatingConstant | IntegerConstant | CharacterConstant | StringConstant;
 assignmentOperator: '=' | '*=' | '/=' | '%=' | '+=' | '-=';
-expressionList: expression (',' expression)*;
+expressionList: assignment (',' assignment)*;
 
 Whitespace: [ \t]+ -> skip;
 Newline: [\r\n]+ -> skip;
