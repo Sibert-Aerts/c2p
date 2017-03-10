@@ -14,11 +14,8 @@ The behavior of scanf is well documented in the man pages [15, 10].
 Minimally `if`, `else`, `return` and `while` must be supported, next to the types `char`, `int`, `float` and `void`.
 
   1. (optional) `for`.
-
   1. (optional) `const`.
-
   1. (optional) `break`.
-
   1. (optional) `continue`.
 
   If you want to go beyond these, a full list can be found in [2, 16].
@@ -38,7 +35,7 @@ Array variables should be supported, as well as operations on individual array e
   1. (optional) assignments of complete arrays or array rows in case of multi-dimensional arrays.
   1. (optional) dynamic arrays.
   
-8. **Conversions** (optional)   
+8. **Conversions** (optional)  
 As a first extension you can support implicit conversions. Consider the following order on the basic types: `float isRicherThan int isRicherThan char`  
 Implicit conversions of a richer to a poorer type (e.g. assignment of an int to a char variable) should cause a warning indicating possible loss of information. Another extension could be support for explicit casts (i.e. the cast operator). This enables the programmer to indicate he is aware of possible information loss. Hence the compiler should not yield a warning anymore.
 
