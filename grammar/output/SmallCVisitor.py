@@ -14,6 +14,11 @@ class SmallCVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SmallCParser#includeStdio.
+    def visitIncludeStdio(self, ctx:SmallCParser.IncludeStdioContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SmallCParser#externalDeclaration.
     def visitExternalDeclaration(self, ctx:SmallCParser.ExternalDeclarationContext):
         return self.visitChildren(ctx)

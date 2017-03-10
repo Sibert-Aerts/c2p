@@ -1,54 +1,38 @@
 grammar SmallC;
 
-program: externalDeclaration*;
+// Program structure
+program: includeStdio? externalDeclaration*;
+includeStdio: '#include <stdio.h>';
 externalDeclaration: functionDefinition | declaration;
 functionDefinition: typeSpecifier Identifier '(' parameterDeclarationList ')' compoundStatement;
 parameterDeclarationList: parameterDeclaration (',' parameterDeclaration)*;
-parameterDeclaration: typeSpecifier Identifier;
-compoundStatement: '{' (variableDeclaration | statement)* '}';
-variableDeclaration: typeSpecifier variableInitList;
-variableInitList: variableInit (',' variableInit)*;
-variableInit: Identifier ('=' assignment)?;
-statement: compoundStatement | condStatement | whileStatement | breakStatement | continueStatement | returnStatement | exprStatement;
+parameterDeclaration: declarationSpecifiers declarator;
+
+// Statements
+compoundStatement: '{' (declaration | statement)* '}';
+statement: compoundStatement | condStatement | whileStatement | forStatement
+    | breakStatement | continueStatement | returnStatement | exprStatement;
 condStatement: 'if' '(' expression ')' statement ('else' statement)?;
 whileStatement: 'while' '(' expression ')' statement;
+forStatement: 'for' '(' (declaration | expression? ';') expression? ';' expression? ')' statement;
 breakStatement: 'break' ';';
 continueStatement: 'continue' ';';
 returnStatement: 'return' expression ';';
 exprStatement: expression? ';';
+
+// Declarations and types
+declaration: declarationSpecifiers initDeclaratorList? ';';
+declarationSpecifiers: (typeSpecifier | typeQualifier)+;
+initDeclaratorList: initDeclarator (',' initDeclarator)*;
+initDeclarator: declarator ('=' assignment)?;
+declarator: pointer? directDeclarator;
+directDeclarator: Identifier | '(' declarator ')' | directDeclarator '[' assignment? ']';
+// What about const pointers?
+pointer: '*' +;
 typeSpecifier: 'void' | 'char' | 'int' | 'float';
 typeQualifier: 'const';
 
-declaration
-    :   declarationSpecifiers initDeclaratorList? ';'
-    ;
-
-declarationSpecifiers: (typeSpecifier | typeQualifier)+;
-
-initDeclaratorList
-    :   initDeclarator
-    |   initDeclaratorList ',' initDeclarator
-    ;
-
-initDeclarator
-    :   declarator ('=' assignment)?
-    ;
-
-declarator
-    :   pointer? directDeclarator
-    ;
-
-directDeclarator
-    :   Identifier
-    |   '(' declarator ')'
-    |   directDeclarator '[' assignment? ']'
-    ;
-
-pointer
-    :   '*' typeQualifier*
-    |   '*' typeQualifier* pointer
-    ;
-
+// Expressions
 expression: assignment | expression ',' assignment;
 assignment: Identifier assignmentOperator expression | condition;
 condition: disjunction | disjunction '?' expression ':' condition;
@@ -66,17 +50,20 @@ constant: FloatingConstant | IntegerConstant | CharacterConstant | StringConstan
 assignmentOperator: '=' | '*=' | '/=' | '%=' | '+=' | '-=';
 expressionList: assignment (',' assignment)*;
 
+// Trivia
 Whitespace: [ \t]+ -> skip;
 Newline: [\r\n]+ -> skip;
 LineComment: '//' ~[\r\n]* -> skip;
+BlockComment: '/*' .*? '*/' -> skip;
 
+// Tokens
 fragment Letter: [a-zA-Z_];
 fragment Digit: [0-9];
 fragment Sign: [-+];
+fragment EscapeSequence: '\\' ['"\\?abfnrtv];
 
 FloatingConstant: Sign? Digit* '.' Digit* ([eE] Sign? Digit+)?;
 IntegerConstant: Sign? Digit+;
-CharacterConstant: '\'' (~[\'\\\r\n] | EscapeSequence) '\'';
-StringConstant: '"' (~[\"\\\r\n] | EscapeSequence | '\\\n')* '"';
-EscapeSequence: '\\' [\'\"\\?abfnrtv];
+CharacterConstant: '\'' (~['\\\n] | EscapeSequence) '\'';
+StringConstant: '"' (EscapeSequence | ~["\\\n] | '\\\n')* '"';
 Identifier: (Letter) (Letter | Digit)*;

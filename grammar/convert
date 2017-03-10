@@ -1,4 +1,9 @@
 #!/bin/bash
 
-echo Converting grammar $1
-java -jar antlr-4.6-complete.jar -Dlanguage=Python3 $1 -visitor -o output
+if [ -z $1 ]
+then
+	echo Pass a g4 argument file.
+else
+	echo Converting grammar $1
+	java -jar antlr-4.6-complete.jar -Dlanguage=Python3 $1 -visitor -o output
+fi
