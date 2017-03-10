@@ -1,34 +1,37 @@
 grammar SmallC;
 
-int a[10];
-
 externalDeclaration: functionDefinition | declaration;
 functionDefinition: typeSpecifier Identifier '(' parameterDeclarationList ')' compoundStatement;
-typeSpecifier: 'char' | 'int' | 'float';
-parameterDeclarationList: parameterDeclaration (',' parameterDeclaration)*
+parameterDeclarationList: parameterDeclaration (',' parameterDeclaration)*;
 parameterDeclaration: typeSpecifier Identifier;
 compoundStatement: '{' (variableDeclaration | statement)* '}';
 variableDeclaration: typeSpecifier variableInitList;
-vairableInitList: variableInit (',' variableInit)*;
+variableInit: variableInit (',' variableInit)*;
 variableInit: Identifier ('=' expression)?;
-statement : compoundStatement | condStatement | whileStatement | breakStatement | continueStatement | returnStatement;
+statement: compoundStatement | condStatement | whileStatement | breakStatement | continueStatement | returnStatement | exprStatement;
 condStatement: 'if' '(' expression ')' statement ('else' statement)?;
 whileStatement: 'while' '(' expression ')' statement;
 breakStatement: 'break' ';';
 continueStatement: 'continue' ';';
 returnStatement: 'return' expression ';';
+exprStatement: expression? ';';
+typeSpecifier: 'void' | 'char' | 'int' | 'float';
 
-expression: identifier '=' expression | condition;
+expression: Identifier assignmentOperator expression | condition;
 condition: disjunction | disjunction '?' expression ':' condition;
 disjunction: conjunction | disjunction '||' conjunction;
 conjunction: comparison | conjunction '&&' comparison;
-comparison: relation | relation '==' relation;
-relation: sum | sum ('<' | '>') sum;
+comparison: relation | relation ('==' | '!=') relation;
+relation: sum | sum ('<' | '>' | '<=' | '>=') sum;
 sum: sum '+' term | sum '-' term | term;
-term: term '*' factor | term '/' factor | term '%' factor | factor;
-factor: '!' factor | '-' factor | primary;
-primary: constant | identifier | '(' expression ')';
+term: term '*' cast | term '/' cast | term '%' cast | cast;
+cast: unary | '(' typeSpecifier ')' cast;
+unary: postfix | ('++' | '--') unary | [&*!+-] cast;
+postfix: primary | postfix ('[' expression ']' | '(' expressionList? ')' | ('.' | '->') Identifier | ('++' | '--'));
+primary: constant | Identifier | '(' expression ')';
 constant: FloatingConstant | IntegerConstant | CharacterConstant | StringConstant;
+assignmentOperator: '=' | '*=' | '/=' | '%=' | '+=' | '-=';
+expressionList: expression (',' expression)*;
 
 Whitespace: [ \t]+ -> skip;
 Newline: [\r\n]+ -> skip;

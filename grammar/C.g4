@@ -169,50 +169,15 @@ initDeclarator
     ;
 
 typeSpecifier
-    :   ('void'
+    :   'void'
     |   'char'
     |   'int'
     |   'float'
-    |   atomicTypeSpecifier
-    |   structOrUnionSpecifier
-    |   enumSpecifier
-    |   typedefName
-    |   '__typeof__' '(' constantExpression ')' // GCC extension
-    ;
-
-structOrUnionSpecifier
-    :   structOrUnion Identifier? '{' structDeclarationList '}'
-    |   structOrUnion Identifier
-    ;
-
-structOrUnion
-    :   'struct'
-    |   'union'
-    ;
-
-structDeclarationList
-    :   structDeclaration
-    |   structDeclarationList structDeclaration
-    ;
-
-structDeclaration
-    :   specifierQualifierList structDeclaratorList? ';'
-    |   staticAssertDeclaration
     ;
 
 specifierQualifierList
     :   typeSpecifier specifierQualifierList?
     |   typeQualifier specifierQualifierList?
-    ;
-
-structDeclaratorList
-    :   structDeclarator
-    |   structDeclaratorList ',' structDeclarator
-    ;
-
-structDeclarator
-    :   declarator
-    |   declarator? ':' constantExpression
     ;
 
 typeQualifier
@@ -252,8 +217,7 @@ parameterList
     ;
 
 parameterDeclaration
-    :   declarationSpecifiers declarator
-    |   declarationSpecifiers2
+    :   declarationSpecifiers declarator?
     ;
 
 identifierList
@@ -271,27 +235,6 @@ typedefName
 
 initializer
     :   assignmentExpression
-    |   '{' initializerList '}'
-    |   '{' initializerList ',' '}'
-    ;
-
-initializerList
-    :   designation? initializer
-    |   initializerList ',' designation? initializer
-    ;
-
-designation
-    :   designatorList '='
-    ;
-
-designatorList
-    :   designator
-    |   designatorList designator
-    ;
-
-designator
-    :   '[' constantExpression ']'
-    |   '.' Identifier
     ;
 
 statement
@@ -362,17 +305,10 @@ declarationList
     ;
 
 Identifier
-    :   IdentifierNondigit
-        (   IdentifierNondigit
+    :   Nondigit
+        (   Nondigit
         |   Digit
         )*
-    ;
-
-fragment
-IdentifierNondigit
-    :   Nondigit
-    |   UniversalCharacterName
-    //|   // other implementation-defined characters...
     ;
 
 fragment
@@ -385,46 +321,21 @@ Digit
     :   [0-9]
     ;
 
-fragment
-UniversalCharacterName
-    :   '\\u' HexQuad
-    |   '\\U' HexQuad HexQuad
-    ;
-
-fragment
-HexQuad
-    :   HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit
-    ;
-
 Constant
     :   IntegerConstant
     |   FloatingConstant
-    //|   EnumerationConstant
     |   CharacterConstant
     ;
 
 fragment
 IntegerConstant
     :   DecimalConstant
-    |   OctalConstant
-    |   HexadecimalConstant
-    |	BinaryConstant
     ;
-
-fragment
-BinaryConstant
-	:	'0' [bB] [0-1]+
-	;
 
 // In real C, `0` starts an octal constant. We simplify things here:
 fragment
 DecimalConstant
     :   Digit+
-    ;
-
-fragment
-NonzeroDigit
-    :   [1-9]
     ;
 
 fragment
