@@ -5,8 +5,8 @@ class PType:
 class PNumericType(PType):
     pass
 
-Address = PType('a')
-Boolean = PType('b')
-Character = PType('c')
-Integer = PNumericType('i')
-Real = PNumericType('r')
+PAddress = PType('a')
+PBoolean = PType('b')
+PCharacter = PType('c')
+PInteger = PNumericType('i')
+PReal = PNumericType('r')
