@@ -3,40 +3,55 @@ from typing import Any
 from .base import PInstruction
 from ..ptypes import PType
 
+
 class Ldo(PInstruction):
-    def __init__(self, ptype: PType, q: int) -> None:
-        self.ptype = ptype
+    """Pushes STORE[q], which has type T."""
+
+    def __init__(self, t: PType, q: int) -> None:
+        self.t = t
         self.q = q
 
     def emit(self) -> str:
-        return 'ldo %s %d' % (self.ptype.letter, self.q)
+        return 'ldo %s %d' % (self.t.letter, self.q)
+
 
 class Ldc(PInstruction):
-    def __init__(self, ptype: PType, q: Any) -> None:
-        self.ptype = ptype
+    """Pushes a constant q, which has type T."""
+
+    def __init__(self, t: PType, q: Any) -> None:
+        self.t = t
         self.q = q
 
     def emit(self) -> str:
-        return 'ldc %s %s' % (self.ptype.letter, self.q)
+        return 'ldc %s %s' % (self.t.letter, self.q)
+
 
 class Ind(PInstruction):
-    def __init__(self, ptype: PType) -> None:
-        self.ptype = ptype
+    """Pushes STORE[pop()], which has type T."""
+
+    def __init__(self, t: PType) -> None:
+        self.t = t
 
     def emit(self) -> str:
-        return 'ind %s' % self.ptype.letter
+        return 'ind %s' % self.t.letter
+
 
 class Sro(PInstruction):
-    def __init__(self, ptype: PType, q: int) -> None:
-        self.ptype = ptype
+    """Sets STORE[q] to pop(), which has type T."""
+
+    def __init__(self, t: PType, q: int) -> None:
+        self.t = t
         self.q = q
 
     def emit(self) -> str:
-        return 'sro %s %d' % (self.ptype.letter, self.q)
+        return 'sro %s %d' % (self.t.letter, self.q)
+
 
 class Sto(PInstruction):
-    def __init__(self, ptype: PType) -> None:
-        self.ptype = ptype
+    """Pops (x:T), then pops (j:addr), then sets STORE[j] to x."""
+
+    def __init__(self, t: PType) -> None:
+        self.t = t
 
     def emit(self) -> str:
-        return 'sto %s' % self.ptype.letter
+        return 'sto %s' % self.t.letter
