@@ -3,7 +3,14 @@
 if [ -z $1 ]
 then
 	echo Pass a g4 argument file.
-else
-	echo Converting grammar $1
-	java -jar antlr-4.6-complete.jar -Dlanguage=Python3 $1 -visitor -o output
+	exit 1
 fi
+g=$1
+g=${g##*/}
+g=${g%.g4}
+where=../src/c2p/grammar/antlr
+echo Converting grammar $g...
+java -jar antlr-4.6-complete.jar -Dlanguage=Python3 $1 -visitor -o $where
+echo Output files written to $where.
+echo "$where/__init__.py"
+echo "from . import ${g}Lexer, ${g}Listener, ${g}Parser, ${g}Visitor" > "$where/__init__.py"

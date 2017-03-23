@@ -44,21 +44,6 @@ class SmallCVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SmallCParser#variableDeclaration.
-    def visitVariableDeclaration(self, ctx:SmallCParser.VariableDeclarationContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SmallCParser#variableInitList.
-    def visitVariableInitList(self, ctx:SmallCParser.VariableInitListContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SmallCParser#variableInit.
-    def visitVariableInit(self, ctx:SmallCParser.VariableInitContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by SmallCParser#statement.
     def visitStatement(self, ctx:SmallCParser.StatementContext):
         return self.visitChildren(ctx)
@@ -71,6 +56,11 @@ class SmallCVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SmallCParser#whileStatement.
     def visitWhileStatement(self, ctx:SmallCParser.WhileStatementContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SmallCParser#forStatement.
+    def visitForStatement(self, ctx:SmallCParser.ForStatementContext):
         return self.visitChildren(ctx)
 
 
@@ -91,16 +81,6 @@ class SmallCVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SmallCParser#exprStatement.
     def visitExprStatement(self, ctx:SmallCParser.ExprStatementContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SmallCParser#typeSpecifier.
-    def visitTypeSpecifier(self, ctx:SmallCParser.TypeSpecifierContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SmallCParser#typeQualifier.
-    def visitTypeQualifier(self, ctx:SmallCParser.TypeQualifierContext):
         return self.visitChildren(ctx)
 
 
@@ -136,6 +116,16 @@ class SmallCVisitor(ParseTreeVisitor):
 
     # Visit a parse tree produced by SmallCParser#pointer.
     def visitPointer(self, ctx:SmallCParser.PointerContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SmallCParser#typeSpecifier.
+    def visitTypeSpecifier(self, ctx:SmallCParser.TypeSpecifierContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by SmallCParser#typeQualifier.
+    def visitTypeQualifier(self, ctx:SmallCParser.TypeQualifierContext):
         return self.visitChildren(ctx)
 
 

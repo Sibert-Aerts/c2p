@@ -4,7 +4,7 @@ grammar SmallC;
 program: includeStdio? externalDeclaration*;
 includeStdio: '#include <stdio.h>';
 externalDeclaration: functionDefinition | declaration;
-functionDefinition: typeSpecifier Identifier '(' parameterDeclarationList ')' compoundStatement;
+functionDefinition: declarationSpecifiers pointer? Identifier '(' parameterDeclarationList ')' compoundStatement;
 parameterDeclarationList: parameterDeclaration (',' parameterDeclaration)*;
 parameterDeclaration: declarationSpecifiers declarator;
 
@@ -26,7 +26,7 @@ declarationSpecifiers: (typeSpecifier | typeQualifier)+;
 initDeclaratorList: initDeclarator (',' initDeclarator)*;
 initDeclarator: declarator ('=' assignment)?;
 declarator: pointer? directDeclarator;
-directDeclarator: Identifier | '(' declarator ')' | directDeclarator '[' assignment? ']';
+directDeclarator: Identifier | '(' declarator ')' | directDeclarator '(' parameterDeclarationList ')' | directDeclarator '[' assignment? ']';
 // What about const pointers?
 pointer: '*' +;
 typeSpecifier: 'void' | 'char' | 'int' | 'float';
@@ -42,7 +42,7 @@ comparison: relation | relation ('==' | '!=') relation;
 relation: plus | plus ('<' | '>' | '<=' | '>=') plus;
 plus: plus '+' times | plus '-' times | times;
 times: times '*' cast | times '/' cast | times '%' cast | cast;
-cast: unary | '(' typeSpecifier ')' cast;
+cast: unary | '(' declarationSpecifiers pointer? ')' cast;
 unary: postfix | ('++' | '--') unary | ('&' | '*' | '!' | '+' | '-') cast;
 postfix: primary | postfix ('[' expression ']' | '(' expressionList? ')' | ('.' | '->') Identifier | ('++' | '--'));
 primary: constant | Identifier | '(' expression ')';
