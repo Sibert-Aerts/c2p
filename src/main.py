@@ -4,7 +4,7 @@ import c2p
 from antlr4 import *
 from c2p.grammar.antlr.SmallCLexer import SmallCLexer
 from c2p.grammar.antlr.SmallCParser import SmallCParser
-from c2p.grammar.ast import ASTVisitor
+from c2p.grammar.ast.visitor import ASTVisitor
 
 # move this somewhere????
 from c2p.grammar.ctypes import *
