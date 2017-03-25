@@ -34,20 +34,20 @@ typeQualifier: 'const';
 
 // Expressions
 expression: assignment | expression ',' assignment;
-assignment: Identifier assignmentOperator expression | condition;
+assignment: unary assignmentOperator expression | condition;
 condition: disjunction | disjunction '?' expression ':' condition;
 disjunction: conjunction | disjunction '||' conjunction;
 conjunction: comparison | conjunction '&&' comparison;
 comparison: relation | relation ('==' | '!=') relation;
 relation: plus | plus ('<' | '>' | '<=' | '>=') plus;
 plus: plus '+' times | plus '-' times | times;
-times: times '*' cast | times '/' cast | times '%' cast | cast;
+times: times '*' cast | times '/' cast | cast;
 cast: unary | '(' declarationSpecifiers pointer? ')' cast;
 unary: postfix | ('++' | '--') unary | ('&' | '*' | '!' | '+' | '-') cast;
-postfix: primary | postfix ('[' expression ']' | '(' expressionList? ')' | ('.' | '->') Identifier | ('++' | '--'));
+postfix: primary | postfix ('[' expression ']' | '(' expressionList? ')' | ('++' | '--'));
 primary: constant | Identifier | '(' expression ')';
 constant: FloatingConstant | IntegerConstant | CharacterConstant | StringConstant;
-assignmentOperator: '=' | '*=' | '/=' | '%=' | '+=' | '-=';
+assignmentOperator: '=' | '*=' | '/=' | '+=' | '-=';
 expressionList: assignment (',' assignment)*;
 
 // Trivia

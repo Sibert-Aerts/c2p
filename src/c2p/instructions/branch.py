@@ -29,3 +29,13 @@ class Ixj(PInstruction):
 
     def emit(self) -> str:
         return 'ixj %s' % self.label
+
+
+class Label(PInstruction):
+    """A P-machine label. (This isn't really an instruction.)"""
+
+    def __init__(self, label: str) -> None:
+        self.label = label
+
+    def emit(self) -> str:
+        return '%s:' % self.label
