@@ -26,7 +26,7 @@ declarationSpecifiers: (typeSpecifier | typeQualifier)+;
 initDeclaratorList: initDeclarator (',' initDeclarator)*;
 initDeclarator: declarator ('=' assignment)?;
 declarator: pointer? directDeclarator;
-directDeclarator: Identifier | '(' declarator ')' | directDeclarator '(' parameterDeclarationList ')' | directDeclarator '[' assignment? ']';
+directDeclarator: Identifier | '(' declarator ')' | directDeclarator '[' assignment? ']';
 // What about const pointers?
 pointer: '*' +;
 typeSpecifier: 'void' | 'char' | 'int' | 'float';
