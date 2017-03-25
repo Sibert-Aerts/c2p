@@ -59,3 +59,4 @@ class CConst(CType):
     def ptype(self) -> PType:
         return self.t.ptype()
 
+fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar()}

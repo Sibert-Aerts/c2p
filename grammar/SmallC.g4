@@ -20,15 +20,13 @@ exprStatement: expression? ';';
 
 // Declarations and types
 declaration: declarationSpecifiers initDeclaratorList? ';';
-declarationSpecifiers: (typeSpecifier | typeQualifier)+;
+declarationSpecifiers: ('void' | 'char' | 'int' | 'float' | 'const')+;
 initDeclaratorList: initDeclarator (',' initDeclarator)*;
 initDeclarator: declarator ('=' assignment)?;
 declarator: pointer directDeclarator;
 directDeclarator: Identifier | '(' declarator ')' | directDeclarator '[' assignment? ']';
 // What about const pointers?
-pointer: '*' *;
-typeSpecifier: 'void' | 'char' | 'int' | 'float';
-typeQualifier: 'const';
+pointer: ('*' 'const'?)*;
 
 // Expressions
 expression: assignment | expression ',' assignment;

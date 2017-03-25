@@ -1,6 +1,16 @@
 from ..antlr.SmallCVisitor import SmallCVisitor  # type: ignore
 from ..antlr.SmallCParser import SmallCParser  # type: ignore
 from .node import *
+from ..ctypes import *
+
+
+def applyStars(ctype:CType, stars:str) -> CType:
+    # works not yet
+    # because it isn't just stars anymore
+    for _ in stars:
+        ctype = CPointer(ctype)
+    return ctype
+
 
 class ASTVisitor(SmallCVisitor):
 
@@ -15,9 +25,8 @@ class ASTVisitor(SmallCVisitor):
     # Visit a parse tree produced by SmallCParser#functionDefinition.
     def visitFunctionDefinition(self, ctx:SmallCParser.FunctionDefinitionContext):
         cs = list(ctx.getChildren())
-        print(cs)
-
-        print([c.getText() for c in ctx.getChildren()])
+        declSpec, pointer, name,  _, parameters, _, body = cs
+        returnType = applyStars(self.visit(declSpec), pointer)
         return FunctionDefinition(name, returnType, parameters, body)
 
 
@@ -83,8 +92,25 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#declarationSpecifiers.
     def visitDeclarationSpecifiers(self, ctx:SmallCParser.DeclarationSpecifiersContext):
-        raise NotImplementedError()
+        specifiers = [c.getText() for c in ctx.getChildren()]
+        if len(specifiers) > 2:
+            raise ValueError("Too many specifiers")
+        theType = None
+        isConst = False
+        for spec in specifiers:
+            if spec == 'const':
+                isConst = True
+            elif theType is not None:
+                theType = fromTypeName[spec]
+            else:
+                raise ValueError("Too many type specifiers")
 
+        if theType is None:
+            raise ValueError("Missing type specifier")
+        if isConst:
+            return CConst(theType)
+        return theType
+               
 
     # Visit a parse tree produced by SmallCParser#initDeclaratorList.
     def visitInitDeclaratorList(self, ctx:SmallCParser.InitDeclaratorListContext):
@@ -108,16 +134,6 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#pointer.
     def visitPointer(self, ctx:SmallCParser.PointerContext):
-        raise NotImplementedError()
-
-
-    # Visit a parse tree produced by SmallCParser#typeSpecifier.
-    def visitTypeSpecifier(self, ctx:SmallCParser.TypeSpecifierContext):
-        raise NotImplementedError()
-
-
-    # Visit a parse tree produced by SmallCParser#typeQualifier.
-    def visitTypeQualifier(self, ctx:SmallCParser.TypeQualifierContext):
         raise NotImplementedError()
 
 
