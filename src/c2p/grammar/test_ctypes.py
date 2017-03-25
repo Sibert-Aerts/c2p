@@ -1,5 +1,5 @@
 import unittest
-from c2p.grammar.ctypes import *
+from .ctypes import *
 
 class TestCTypesEquality(unittest.TestCase):
     def test_equality(self):

@@ -1,3 +1,4 @@
 int **** main(int argc, char **argv) {
-	return 5;
+	const const int x = 6;
+	return (int****)&(main);
 }
