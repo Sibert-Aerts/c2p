@@ -17,24 +17,6 @@ class SmallCListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SmallCParser#includeStdio.
-    def enterIncludeStdio(self, ctx:SmallCParser.IncludeStdioContext):
-        pass
-
-    # Exit a parse tree produced by SmallCParser#includeStdio.
-    def exitIncludeStdio(self, ctx:SmallCParser.IncludeStdioContext):
-        pass
-
-
-    # Enter a parse tree produced by SmallCParser#externalDeclaration.
-    def enterExternalDeclaration(self, ctx:SmallCParser.ExternalDeclarationContext):
-        pass
-
-    # Exit a parse tree produced by SmallCParser#externalDeclaration.
-    def exitExternalDeclaration(self, ctx:SmallCParser.ExternalDeclarationContext):
-        pass
-
-
     # Enter a parse tree produced by SmallCParser#functionDefinition.
     def enterFunctionDefinition(self, ctx:SmallCParser.FunctionDefinitionContext):
         pass

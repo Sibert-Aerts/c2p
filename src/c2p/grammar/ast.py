@@ -103,25 +103,19 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#program.
     def visitProgram(self, ctx:SmallCParser.ProgramContext):
-        declarations = [self.visit(c) for c in ctx.getChildren() \
-            if isinstance(c, SmallCParser.FunctionDefinitionContext) \
-            or isinstance(c, SmallCParser.ExternalDeclarationContext)]
+        declarations = [self.visit(c) for c in ctx.getChildren()
+            if isinstance(c, SmallCParser.FunctionDefinitionContext)
+            or isinstance(c, SmallCParser.DeclerationContext)]
         return Program(declarations)
-
-
-    # Visit a parse tree produced by SmallCParser#includeStdio.
-    def visitIncludeStdio(self, ctx:SmallCParser.IncludeStdioContext):
-        raise NotImplementedError()
-
-
-    # Visit a parse tree produced by SmallCParser#externalDeclaration.
-    def visitExternalDeclaration(self, ctx:SmallCParser.ExternalDeclarationContext):
-        raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#functionDefinition.
     def visitFunctionDefinition(self, ctx:SmallCParser.FunctionDefinitionContext):
-        raise NotImplementedError()
+        cs = list(ctx.getChildren())
+        print(cs)
+
+        print([c.getText() for c in ctx.getChildren()])
+        return FunctionDefinition(name, returnType, parameters, body)
 
 
     # Visit a parse tree produced by SmallCParser#parameterDeclarationList.

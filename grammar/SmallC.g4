@@ -1,10 +1,8 @@
 grammar SmallC;
 
 // Program structure
-program: includeStdio? externalDeclaration*;
-includeStdio: '#include <stdio.h>';
-externalDeclaration: functionDefinition | declaration;
-functionDefinition: declarationSpecifiers pointer? Identifier '(' parameterDeclarationList ')' compoundStatement;
+program: '#include <stdio.h>'? (functionDefinition | declaration)*;
+functionDefinition: declarationSpecifiers pointer Identifier '(' parameterDeclarationList ')' compoundStatement;
 parameterDeclarationList: parameterDeclaration (',' parameterDeclaration)*;
 parameterDeclaration: declarationSpecifiers declarator;
 
@@ -25,10 +23,10 @@ declaration: declarationSpecifiers initDeclaratorList? ';';
 declarationSpecifiers: (typeSpecifier | typeQualifier)+;
 initDeclaratorList: initDeclarator (',' initDeclarator)*;
 initDeclarator: declarator ('=' assignment)?;
-declarator: pointer? directDeclarator;
+declarator: pointer directDeclarator;
 directDeclarator: Identifier | '(' declarator ')' | directDeclarator '[' assignment? ']';
 // What about const pointers?
-pointer: '*' +;
+pointer: '*' *;
 typeSpecifier: 'void' | 'char' | 'int' | 'float';
 typeQualifier: 'const';
 
@@ -42,7 +40,7 @@ comparison: relation | relation ('==' | '!=') relation;
 relation: plus | plus ('<' | '>' | '<=' | '>=') plus;
 plus: plus '+' times | plus '-' times | times;
 times: times '*' cast | times '/' cast | cast;
-cast: unary | '(' declarationSpecifiers pointer? ')' cast;
+cast: unary | '(' declarationSpecifiers pointer ')' cast;
 unary: postfix | ('++' | '--') unary | ('&' | '*' | '!' | '+' | '-') cast;
 postfix: primary | postfix ('[' expression ']' | '(' expressionList? ')' | ('++' | '--'));
 primary: constant | Identifier | '(' expression ')';
