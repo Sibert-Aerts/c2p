@@ -103,7 +103,10 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#program.
     def visitProgram(self, ctx:SmallCParser.ProgramContext):
-        raise NotImplementedError()
+        declarations = [self.visit(c) for c in ctx.getChildren() \
+            if isinstance(c, SmallCParser.FunctionDefinitionContext) \
+            or isinstance(c, SmallCParser.ExternalDeclarationContext)]
+        return Program(declarations)
 
 
     # Visit a parse tree produced by SmallCParser#includeStdio.
