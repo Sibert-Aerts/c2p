@@ -72,12 +72,16 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#compoundStatement.
     def visitCompoundStatement(self, ctx:SmallCParser.CompoundStatementContext):
-        raise NotImplementedError()
+        declarations = [self.visit(c) for c in ctx.getChildren()
+            if isinstance(c, SmallCParser.DeclarationContext)
+            or isinstance(c, SmallCParser.StatementContext)]
+        return Program(declarations)
 
 
     # Visit a parse tree produced by SmallCParser#statement.
     def visitStatement(self, ctx:SmallCParser.StatementContext):
-        raise NotImplementedError()
+        # A statement has exactly one child, nothing more, nothing less.
+        return self.visit(list(ctx.getChildren())[0])
 
 
     # Visit a parse tree produced by SmallCParser#condStatement.
@@ -107,16 +111,34 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#returnStatement.
     def visitReturnStatement(self, ctx:SmallCParser.ReturnStatementContext):
-        raise NotImplementedError()
+        _, _expr, _ = list(ctx.getChildren())
+        return ReturnStatement(self.visit(_expr))
 
 
     # Visit a parse tree produced by SmallCParser#exprStatement.
     def visitExprStatement(self, ctx:SmallCParser.ExprStatementContext):
-        raise NotImplementedError()
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.ExpressionContext):
+            return ExprStatement(self.visit(children[0]))
+        
+        # just a blank ; statement
+        return ExprStatement(None)
+        
 
 
     # Visit a parse tree produced by SmallCParser#declaration.
     def visitDeclaration(self, ctx:SmallCParser.DeclarationContext):
+        children = list(ctx.getChildren())
+        
+        theType = self.visit(children[0])
+        declarators = List[InitDeclarator]
+
+        # initDeclaratorList is present
+        if len(children) == 3:
+            declarators = self.visit(children[1])
+        
+        return Declaration
         raise NotImplementedError()
 
 
@@ -144,12 +166,22 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#initDeclaratorList.
     def visitInitDeclaratorList(self, ctx:SmallCParser.InitDeclaratorListContext):
-        raise NotImplementedError()
+        declarators = [self.visit(c) for c in ctx.getChildren()]
+        return declarators
 
 
     # Visit a parse tree produced by SmallCParser#initDeclarator.
     def visitInitDeclarator(self, ctx:SmallCParser.InitDeclaratorContext):
-        raise NotImplementedError()
+        children = list(ctx.getChildren())
+
+        declarator = self.visit(children[0])
+        assignment = None
+        
+        # assignment is present
+        if len(children) == 3:
+            assignment = self.visit(children[2])
+
+        return InitDeclarator(declarator, assignment)
 
 
     # Visit a parse tree produced by SmallCParser#declarator.
@@ -187,6 +219,12 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#expression.
     def visitExpression(self, ctx:SmallCParser.ExpressionContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.AssignmentContext):
+            # not really an assignment: fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
@@ -264,7 +302,16 @@ class ASTVisitor(SmallCVisitor):
             # fall through
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        _plus, _op, _times = children
+        
+        plus = self.visit(_plus)
+        times = self.visit(_times)
+        op = _op.getText()
+
+        if op == '+':
+            return Add(plus, times)
+        if op == '-':
+            return Subtract(plus, times)
 
 
     # Visit a parse tree produced by SmallCParser#times.
@@ -286,7 +333,13 @@ class ASTVisitor(SmallCVisitor):
             # fall through
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        # ( declarationSpecifiers pointer ) cast
+        _, _specifiers, _pointer, _, _cast = children
+
+        theType = applyPointerAsType(self.visit(_specifiers), _pointer)
+        cast = self.visit(_cast)
+
+        return Cast(theType, cast)
 
 
     # Visit a parse tree produced by SmallCParser#unary.
@@ -297,7 +350,26 @@ class ASTVisitor(SmallCVisitor):
             # fall through
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        # ('++' | '--') unary | ('&' | '*' | '!' | '+' | '-') cast
+        _op, _expr = children
+
+        op = _op.getText()
+        expr = self.visit(_expr)
+
+        if op == '++':
+            return PrefixIncrement(expr)
+        if op == '--':
+            return PrefixDecrement(expr)
+        if op == '&':
+            return AddressOf(expr)
+        if op == '*':
+            return Dereference(expr)
+        if op == '!':
+            return LogicalNot(expr)
+        if op == '-':
+            return Negate(expr)
+        if op == '+':
+            return expr     # ignore it entirely
 
 
     # Visit a parse tree produced by SmallCParser#postfix.
@@ -319,7 +391,14 @@ class ASTVisitor(SmallCVisitor):
             # fall through
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        # Identifier
+        if children[0].symbol.type == SmallCParser.Identifier:
+            return Identifier(children[0].getText())
+            
+        # ( expression )
+        if isinstance(children[1], SmallCParser.ExpressionContext):
+            return self.visit(children[1])
+
 
 
     # Visit a parse tree produced by SmallCParser#constant.
@@ -338,7 +417,7 @@ class ASTVisitor(SmallCVisitor):
             return Constant(CConst(CChar()), _value[1])
 
         if(_type == SmallCParser.StringConstant):
-            return Constant(CArray(CConst(CChar())), _value[1:-1])
+            return Constant(CConst(CArray(CConst(CChar()))), _value[1:-1])
 
 
     # Visit a parse tree produced by SmallCParser#assignmentOperator.

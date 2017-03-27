@@ -1,4 +1,7 @@
 const int const *const**const* main(int argc, char **argv, int test[], char *(*pest)[20]) {
+
+	;"C";;;;;'C'; // C
+	const const const const int;
 	const const float const const * const * x = 6;
 	17;;;; 
 	int bono = -2;

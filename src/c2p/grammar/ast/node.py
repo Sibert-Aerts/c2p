@@ -22,7 +22,7 @@ Add = NamedTuple('Add', [('left', Expression), ('right', Expression)])
 Subtract = NamedTuple('Subtract', [('left', Expression), ('right', Expression)])
 Multiply = NamedTuple('Multiply', [('left', Expression), ('right', Expression)])
 Divide = NamedTuple('Divide', [('left', Expression), ('right', Expression)])
-Cast = NamedTuple('Cast', [('left', Expression), ('right', Expression)])
+Cast = NamedTuple('Cast', [('type', CType), ('right', Expression)])
 PrefixIncrement = NamedTuple('PrefixIncrement', [('inner', Expression)])
 PostfixIncrement = NamedTuple('PostfixIncrement', [('inner', Expression)])
 PrefixDecrement = NamedTuple('PrefixDecrement', [('inner', Expression)])
@@ -50,7 +50,7 @@ InitDeclarator = NamedTuple('InitDeclarator', [
 ])
 
 Declaration = NamedTuple('Declaration', [
-    ('specifiers', List[str]),
+    ('specifiers', CType),
     ('initDeclarators', List[InitDeclarator]),
 ])
 
