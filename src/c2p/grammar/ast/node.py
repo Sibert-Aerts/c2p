@@ -40,6 +40,7 @@ IdentifierExpression = NamedTuple('IdentifierExpression', [('identifier', Identi
 Declarator = Any  # of the following:
 IdentifierDeclarator = NamedTuple('IdentifierDeclarator', [('identifier', Identifier)])
 PointerDeclarator = NamedTuple('PointerDeclarator', [('inner', 'Declarator')])
+ConstantDeclarator = NamedTuple('ConstantDeclarator', [('inner', 'Declarator')])
 ArrayDeclarator = NamedTuple('ArrayDeclarator', [('inner', 'Declarator'), ('size', Expression)])
 
 # Declarations
