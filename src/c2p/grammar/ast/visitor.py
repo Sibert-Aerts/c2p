@@ -63,8 +63,8 @@ class ASTVisitor(SmallCVisitor):
     def visitParameterDeclaration(self, ctx:SmallCParser.ParameterDeclarationContext):
         _specifiers, _declarator = list(ctx.getChildren())
 
-        declarator = self.visit(_declarator)
         theType = self.visit(_specifiers)
+        declarator = self.visit(_declarator)
 
         return ParameterDeclaration(theType, declarator)
 
@@ -165,7 +165,6 @@ class ASTVisitor(SmallCVisitor):
     def visitDirectDeclarator(self, ctx:SmallCParser.DirectDeclaratorContext) -> Declarator:
         children = list(ctx.getChildren())
         
-        print(children[0].getText(), type(children[0]))
         # Identifier
         if len(children) == 1:
              return IdentifierDeclarator(Identifier(children[0].getText()))
@@ -179,7 +178,7 @@ class ASTVisitor(SmallCVisitor):
             # directDeclarator []
             if len(children) == 3:
                 # I put a None here and hope to remember it later.
-                return ArrayDeclarator(self.visit(children[0]), None))
+                return ArrayDeclarator(self.visit(children[0]), None)
                 
             # directDeclarator [ assignment ]
             if len(children) == 4:
