@@ -192,67 +192,153 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#assignment.
     def visitAssignment(self, ctx:SmallCParser.AssignmentContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.ConditionContext):
+            # not really an assignment: fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#condition.
     def visitCondition(self, ctx:SmallCParser.ConditionContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.DisjunctionContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#disjunction.
     def visitDisjunction(self, ctx:SmallCParser.DisjunctionContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.ConjunctionContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#conjunction.
     def visitConjunction(self, ctx:SmallCParser.ConjunctionContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.ComparisonContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#comparison.
     def visitComparison(self, ctx:SmallCParser.ComparisonContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.RelationContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#relation.
     def visitRelation(self, ctx:SmallCParser.RelationContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.PlusContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#plus.
     def visitPlus(self, ctx:SmallCParser.PlusContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.TimesContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#times.
     def visitTimes(self, ctx:SmallCParser.TimesContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.CastContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#cast.
     def visitCast(self, ctx:SmallCParser.CastContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.UnaryContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#unary.
     def visitUnary(self, ctx:SmallCParser.UnaryContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.PostfixContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#postfix.
     def visitPostfix(self, ctx:SmallCParser.PostfixContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.PrimaryContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#primary.
     def visitPrimary(self, ctx:SmallCParser.PrimaryContext):
+        children = list(ctx.getChildren())
+
+        if isinstance(children[0], SmallCParser.ConstantContext):
+            # fall through
+            return self.visit(children[0])
+
         raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#constant.
     def visitConstant(self, ctx:SmallCParser.ConstantContext):
-        raise NotImplementedError()
+        _token , = list(ctx.getChildren())
+        _type = _token.symbol.type
+        _value = _token.getText()
+
+        if(_type == SmallCParser.FloatingConstant):
+            return Constant(CConst(CFloat()), float(_value))
+
+        if(_type == SmallCParser.IntegerConstant):
+            return Constant(CConst(CInt()), int(_value))
+
+        if(_type == SmallCParser.CharacterConstant):
+            return Constant(CConst(CChar()), _value[1])
+
+        if(_type == SmallCParser.StringConstant):
+            return Constant(CArray(CConst(CChar())), _value[1:-1])
 
 
     # Visit a parse tree produced by SmallCParser#assignmentOperator.

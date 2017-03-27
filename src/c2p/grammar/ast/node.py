@@ -1,5 +1,5 @@
 from typing import Any, List, NamedTuple, Optional, Union
-from ..ctypes import CType
+from ..ctypes import CType, CConst
 # from ..ptypes import PType, PAddress, PBoolean, PCharacter, PInteger, PReal
 
 ### AST nodes
@@ -33,7 +33,7 @@ LogicalNot = NamedTuple('LogicalNot', [('inner', Expression)])
 Negate = NamedTuple('Negate', [('inner', Expression)])
 Index = NamedTuple('Index', [('array', Expression), ('index', Expression)])
 Call = NamedTuple('Call', [('name', Expression), ('arguments', List[Expression])])
-Constant = NamedTuple('Constant', [('value', Any)])
+Constant = NamedTuple('Constant', [('type', CConst), ('value', Any)])
 IdentifierExpression = NamedTuple('IdentifierExpression', [('identifier', Identifier)])
 
 # Declarators

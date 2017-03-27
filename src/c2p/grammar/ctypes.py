@@ -51,6 +51,15 @@ class CPointer(CType):
         return PAddress
 
 
+class CArray(CType):
+    def __init__(self, t: CType) -> None:
+        super().__init__()
+        self.t = t
+
+    def ptype(self) -> PType:
+        return PAddress
+
+
 class CConst(CType):
     def __init__(self, t: CType) -> None:
         super().__init__()
