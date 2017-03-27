@@ -79,8 +79,9 @@ CompoundStatement = NamedTuple('CompoundStatement', [
 ])
 
 # Top-level stuff
+# this is still a bit funky, because the declarator and type go together
 ParameterDeclaration = NamedTuple('ParameterDeclaration', [
-    ('specifiers', List[str]),
+    ('type', CType),
     ('declarator', Declarator),
 ])
 

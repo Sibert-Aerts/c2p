@@ -109,16 +109,6 @@ class SmallCVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by SmallCParser#typeSpecifier.
-    def visitTypeSpecifier(self, ctx:SmallCParser.TypeSpecifierContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by SmallCParser#typeQualifier.
-    def visitTypeQualifier(self, ctx:SmallCParser.TypeQualifierContext):
-        return self.visitChildren(ctx)
-
-
     # Visit a parse tree produced by SmallCParser#expression.
     def visitExpression(self, ctx:SmallCParser.ExpressionContext):
         return self.visitChildren(ctx)

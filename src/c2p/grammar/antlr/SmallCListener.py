@@ -188,24 +188,6 @@ class SmallCListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by SmallCParser#typeSpecifier.
-    def enterTypeSpecifier(self, ctx:SmallCParser.TypeSpecifierContext):
-        pass
-
-    # Exit a parse tree produced by SmallCParser#typeSpecifier.
-    def exitTypeSpecifier(self, ctx:SmallCParser.TypeSpecifierContext):
-        pass
-
-
-    # Enter a parse tree produced by SmallCParser#typeQualifier.
-    def enterTypeQualifier(self, ctx:SmallCParser.TypeQualifierContext):
-        pass
-
-    # Exit a parse tree produced by SmallCParser#typeQualifier.
-    def exitTypeQualifier(self, ctx:SmallCParser.TypeQualifierContext):
-        pass
-
-
     # Enter a parse tree produced by SmallCParser#expression.
     def enterExpression(self, ctx:SmallCParser.ExpressionContext):
         pass

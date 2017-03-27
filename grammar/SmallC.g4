@@ -25,7 +25,6 @@ initDeclaratorList: initDeclarator (',' initDeclarator)*;
 initDeclarator: declarator ('=' assignment)?;
 declarator: pointer directDeclarator;
 directDeclarator: Identifier | '(' declarator ')' | directDeclarator '[' assignment? ']';
-// What about const pointers?
 pointer: ('*' 'const'?)*;
 
 // Expressions

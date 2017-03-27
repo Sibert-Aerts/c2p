@@ -4,11 +4,17 @@ from .node import *
 from ..ctypes import *
 
 
-def applyStars(ctype:CType, stars:str) -> CType:
-    # works not yet
-    # because it isn't just stars anymore
-    for _ in stars:
-        ctype = CPointer(ctype)
+def applyStars(ctype:CType, stars:SmallCParser.PointerContext) -> CType:
+    children = [c.getText() for c in stars.getChildren()]
+
+    # int *const** x → declare x as pointer to (pointer to (const (pointer to (int)))
+    # so it's just layered left-to-right starting from the first asterisk
+    for token in children:
+        if token == '*':
+            ctype = CPointer(ctype)
+        elif token == 'const':
+            ctype = CConst(ctype)
+
     return ctype
 
 
@@ -18,26 +24,39 @@ class ASTVisitor(SmallCVisitor):
     def visitProgram(self, ctx:SmallCParser.ProgramContext):
         declarations = [self.visit(c) for c in ctx.getChildren()
             if isinstance(c, SmallCParser.FunctionDefinitionContext)
-            or isinstance(c, SmallCParser.DeclerationContext)]
+            or isinstance(c, SmallCParser.DeclarationContext)]
         return Program(declarations)
 
 
     # Visit a parse tree produced by SmallCParser#functionDefinition.
     def visitFunctionDefinition(self, ctx:SmallCParser.FunctionDefinitionContext):
-        cs = list(ctx.getChildren())
-        declSpec, pointer, name,  _, parameters, _, body = cs
-        returnType = applyStars(self.visit(declSpec), pointer)
+        # Underscores indicate a variable is an antlr4 object
+        _declSpec, _pointer, _name,  _, _parameters, _, _body = list(ctx.getChildren())
+
+        name = _name.getText()
+        returnType = applyStars(self.visit(_declSpec), _pointer)
+        parameters = self.visit(_parameters)
+        body = self.visit(_body)
+
         return FunctionDefinition(name, returnType, parameters, body)
 
 
     # Visit a parse tree produced by SmallCParser#parameterDeclarationList.
     def visitParameterDeclarationList(self, ctx:SmallCParser.ParameterDeclarationListContext):
-        raise NotImplementedError()
+        declarations = [self.visit(c) for c in ctx.getChildren()
+            if isinstance(c, SmallCParser.ParameterDeclarationContext)]
+        return declarations
 
 
     # Visit a parse tree produced by SmallCParser#parameterDeclaration.
     def visitParameterDeclaration(self, ctx:SmallCParser.ParameterDeclarationContext):
-        raise NotImplementedError()
+        _specifiers, _declarator = list(ctx.getChildren())
+
+        specifiers = self.visit(_specifiers)
+        declarator = self.visit(_declarator)
+
+        return ParameterDeclaration(specifiers, declarator)
+
 
 
     # Visit a parse tree produced by SmallCParser#compoundStatement.
@@ -93,20 +112,20 @@ class ASTVisitor(SmallCVisitor):
     # Visit a parse tree produced by SmallCParser#declarationSpecifiers.
     def visitDeclarationSpecifiers(self, ctx:SmallCParser.DeclarationSpecifiersContext):
         specifiers = [c.getText() for c in ctx.getChildren()]
-        if len(specifiers) > 2:
-            raise ValueError("Too many specifiers")
+        
         theType = None
         isConst = False
         for spec in specifiers:
             if spec == 'const':
                 isConst = True
-            elif theType is not None:
+            elif theType is None:
                 theType = fromTypeName[spec]
             else:
                 raise ValueError("Too many type specifiers")
 
         if theType is None:
             raise ValueError("Missing type specifier")
+        
         if isConst:
             return CConst(theType)
         return theType
