@@ -57,8 +57,8 @@ fragment Digit: [0-9];
 fragment Sign: [-+];
 fragment EscapeSequence: '\\' ['"\\?abfnrtv];
 
-FloatingConstant: Sign? Digit* '.' Digit* ([eE] Sign? Digit+)?;
-IntegerConstant: Sign? Digit+;
+FloatingConstant: Digit* '.' Digit* ([eE] Sign? Digit+)?;
+IntegerConstant: Digit+;
 CharacterConstant: '\'' (~['\\\n] | EscapeSequence) '\'';
 StringConstant: '"' (EscapeSequence | ~["\\\n] | '\\\n')* '"';
 Identifier: (Letter) (Letter | Digit)*;
