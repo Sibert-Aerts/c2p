@@ -41,12 +41,15 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#functionDefinition.
     def visitFunctionDefinition(self, ctx:SmallCParser.FunctionDefinitionContext):
+        children = list(ctx.getChildren())
         # Underscores indicate a variable is an antlr4 object
-        _specifiers, _pointer, _name,  _, _parameters, _, _body = list(ctx.getChildren())
-
+        _specifiers, _pointer, _name  = children[:3]
+        _body = children[-1]
+        _parameters = children [-3] if len(children) == 7 else None
+ 
         name = _name.getText()
         returnType = applyPointerAsType(self.visit(_specifiers), _pointer)
-        parameters = self.visit(_parameters)
+        parameters = self.visit(_parameters) if _parameters is not None else []
         body = self.visit(_body)
 
         return FunctionDefinition(name, returnType, parameters, body)
@@ -75,7 +78,7 @@ class ASTVisitor(SmallCVisitor):
         declarations = [self.visit(c) for c in ctx.getChildren()
             if isinstance(c, SmallCParser.DeclarationContext)
             or isinstance(c, SmallCParser.StatementContext)]
-        return Program(declarations)
+        return CompoundStatement(declarations)
 
 
     # Visit a parse tree produced by SmallCParser#statement.
@@ -86,17 +89,79 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#condStatement.
     def visitCondStatement(self, ctx:SmallCParser.CondStatementContext):
-        raise NotImplementedError()
+        children = list(ctx.getChildren())
+
+        # if ( expression ) statement
+        if len(children) == 5:
+            _, _, _expr, _, _trueBody = children
+
+            expr = self.visit(_expr)
+            trueBody = self.visit(_trueBody)
+
+            return CondStatement(expr, trueBody, None)
+
+        # if ( expression ) statement else statement
+        if len(children) == 7:
+            _, _, _expr, _, _trueBody, _, _falseBody = children
+
+            expr = self.visit(_expr)
+            trueBody = self.visit(_trueBody)
+            falseBody = self.visit(_falseBody)
+
+            return CondStatement(expr, trueBody, falseBody)
 
 
     # Visit a parse tree produced by SmallCParser#whileStatement.
     def visitWhileStatement(self, ctx:SmallCParser.WhileStatementContext):
-        raise NotImplementedError()
+        children = list(ctx.getChildren())
 
+        # while ( expression ) statement
+        _, _, _expr, _, _body = children
+
+        expr = self.visit(_expr)
+        body = self.visit(_body)
+
+        return WhileStatement(expr, body)
 
     # Visit a parse tree produced by SmallCParser#forStatement.
     def visitForStatement(self, ctx:SmallCParser.ForStatementContext):
-        raise NotImplementedError()
+        children = list(ctx.getChildren())
+
+        # we know the last element will be the body
+        body = self.visit(children[-1])
+
+        # chop off the leading "while (" and ending ") statement" so we just get:
+        # (declaration | expression? ';') expression? ';' expression?
+        children = children[2: -2]
+        
+        left, center, right = None, None, None
+
+        # declaration expression? ';' expression?
+        if isinstance(children[0], SmallCParser.DeclarationContext):
+            left = self.visit(children[0])
+            children = children [1:]
+        # expression ';' expression? ';' expression?
+        elif isinstance(children[0], SmallCParser.ExpressionContext):
+            left = self.visit(children[0])
+            children = children [2:]
+        # ';' expression? ';' expression?
+        else:
+            children = children [1:]
+
+        # whatever the start was, we chopped it off, so now `children` holds
+        # expression? ';' expression?
+
+        if isinstance(children[0], SmallCParser.ExpressionContext):
+            center = self.visit(children[0])
+            children = children [1:]
+        children = children [1:]
+
+        # expression?
+
+        if len(children) == 1:
+            right = self.visit(children[0])
+
+        return ForStatement(left, center, right, body)
 
 
     # Visit a parse tree produced by SmallCParser#breakStatement.
@@ -132,14 +197,13 @@ class ASTVisitor(SmallCVisitor):
         children = list(ctx.getChildren())
         
         theType = self.visit(children[0])
-        declarators = List[InitDeclarator]
+        declarators = [] # type: List[InitDeclarator]
 
         # initDeclaratorList is present
         if len(children) == 3:
             declarators = self.visit(children[1])
         
-        return Declaration
-        raise NotImplementedError()
+        return Declaration(theType, declarators)
 
 
     # Visit a parse tree produced by SmallCParser#declarationSpecifiers.
@@ -166,7 +230,8 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#initDeclaratorList.
     def visitInitDeclaratorList(self, ctx:SmallCParser.InitDeclaratorListContext):
-        declarators = [self.visit(c) for c in ctx.getChildren()]
+        declarators = [self.visit(c) for c in ctx.getChildren()
+            if isinstance(c, SmallCParser.InitDeclaratorContext)]
         return declarators
 
 
@@ -236,7 +301,22 @@ class ASTVisitor(SmallCVisitor):
             # not really an assignment: fall through
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        _left, _op, _right = children
+
+        left = self.visit(_left)
+        op = _op.getText()
+        right = self.visit(_right)
+
+        if op == '=':
+            return Assignment(left, right)
+        if op == '+=':
+            return AddAssignment(left, right)
+        if op == '-=':
+            return SubAssignment(left, right)
+        if op == '*=':
+            return MulAssignment(left, right)
+        if op == '/=':
+            return DivAssignment(left, right)
 
 
     # Visit a parse tree produced by SmallCParser#condition.
@@ -287,11 +367,26 @@ class ASTVisitor(SmallCVisitor):
     def visitRelation(self, ctx:SmallCParser.RelationContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.PlusContext):
-            # fall through
+        # plus
+        if len(children) == 1:
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        # plus ('<' | '>' | '<=' | '>=') plus
+        if len(children) == 3:
+            _left, _op, _right = children
+
+            left = self.visit(_left)
+            op = _op.getText()
+            right = self.visit(_right)
+            
+            if op == '<':
+                return LessThan(left, right)
+            if op == '>':
+                return GreaterThan(left, right)
+            if op == '<=':
+                return LessThanEquals(left, right)
+            if op == '>=':
+                return GreaterThanEquals(left, right)
 
 
     # Visit a parse tree produced by SmallCParser#plus.
@@ -380,7 +475,34 @@ class ASTVisitor(SmallCVisitor):
             # fall through
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        subject = self.visit(children[0])
+        children = children[1:]
+
+        # `children` = '[' expression ']' | '(' expressionList? ')' | '++' | '--'
+
+        # subject++ | subject--
+        if len(children) == 1:
+            op = children[0].getText()
+            if op == '++':
+                return PostfixIncrement(subject)
+            if op == '--':
+                return PostfixDecrement(subject)
+
+        brace = children[0].getText()
+
+        # subject [ expression ]
+        if brace == '[':
+            index = self.visit(children[1])
+            return Index(subject, index)
+
+        # subject ( expressionList? )
+        if brace == '(':
+            # there's an expressionList
+            if len(children) == 3:
+                expressions = self.visit(children[1])
+                return Call(subject, expressions)
+            return Call(subject, [])
+            
 
 
     # Visit a parse tree produced by SmallCParser#primary.
@@ -418,11 +540,6 @@ class ASTVisitor(SmallCVisitor):
 
         if(_type == SmallCParser.StringConstant):
             return Constant(CConst(CArray(CConst(CChar()))), _value[1:-1])
-
-
-    # Visit a parse tree produced by SmallCParser#assignmentOperator.
-    def visitAssignmentOperator(self, ctx:SmallCParser.AssignmentOperatorContext):
-        raise NotImplementedError()
 
 
     # Visit a parse tree produced by SmallCParser#expressionList.

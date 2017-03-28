@@ -9,6 +9,10 @@ Identifier = NamedTuple('Identifier', [('name', str)])
 Expression = Any  # of the following:
 Comma = NamedTuple('Comma', [('left', Expression), ('right', Expression)])
 Assignment = NamedTuple('Assignment', [('left', Expression), ('right', Expression)])
+AddAssignment = NamedTuple('Assignment', [('left', Expression), ('right', Expression)])
+SubAssignment = NamedTuple('Assignment', [('left', Expression), ('right', Expression)])
+MulAssignment = NamedTuple('Assignment', [('left', Expression), ('right', Expression)])
+DivAssignment = NamedTuple('Assignment', [('left', Expression), ('right', Expression)])
 TernaryIf = NamedTuple('TernaryIf', [('left', Expression), ('right', Expression)])
 LogicalOr = NamedTuple('LogicalOr', [('left', Expression), ('right', Expression)])
 LogicalAnd = NamedTuple('LogicalAnd', [('left', Expression), ('right', Expression)])
@@ -50,7 +54,7 @@ InitDeclarator = NamedTuple('InitDeclarator', [
 ])
 
 Declaration = NamedTuple('Declaration', [
-    ('specifiers', CType),
+    ('type', CType),
     ('initDeclarators', List[InitDeclarator]),
 ])
 

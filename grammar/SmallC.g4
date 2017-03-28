@@ -2,7 +2,7 @@ grammar SmallC;
 
 // Program structure
 program: '#include <stdio.h>'? (functionDefinition | declaration)*;
-functionDefinition: declarationSpecifiers pointer Identifier '(' parameterDeclarationList ')' compoundStatement;
+functionDefinition: declarationSpecifiers pointer Identifier '(' parameterDeclarationList? ')' compoundStatement;
 parameterDeclarationList: parameterDeclaration (',' parameterDeclaration)*;
 parameterDeclaration: declarationSpecifiers declarator;
 
