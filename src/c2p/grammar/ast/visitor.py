@@ -166,12 +166,12 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#breakStatement.
     def visitBreakStatement(self, ctx:SmallCParser.BreakStatementContext):
-        raise NotImplementedError()
+        return BreakStatement()
 
 
     # Visit a parse tree produced by SmallCParser#continueStatement.
     def visitContinueStatement(self, ctx:SmallCParser.ContinueStatementContext):
-        raise NotImplementedError()
+        return ContinueStatement()
 
 
     # Visit a parse tree produced by SmallCParser#returnStatement.
@@ -291,19 +291,22 @@ class ASTVisitor(SmallCVisitor):
     def visitExpression(self, ctx:SmallCParser.ExpressionContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.AssignmentContext):
-            # not really an assignment: fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        _left, _, _right = children
+
+        left = self.visit(_left)
+        right = self.visit(_right)
+
+        return Comma(left, right)
 
 
     # Visit a parse tree produced by SmallCParser#assignment.
     def visitAssignment(self, ctx:SmallCParser.AssignmentContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.ConditionContext):
-            # not really an assignment: fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
         _left, _op, _right = children
@@ -328,44 +331,65 @@ class ASTVisitor(SmallCVisitor):
     def visitCondition(self, ctx:SmallCParser.ConditionContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.DisjunctionContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        _cond, _, _left, _, _right = children
+
+        cond = self.visit(_cond)
+        left = self.visit(_left)
+        right = self.visit(_right)
+
+        return TernaryIf(cond, left, right)
 
 
     # Visit a parse tree produced by SmallCParser#disjunction.
     def visitDisjunction(self, ctx:SmallCParser.DisjunctionContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.ConjunctionContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        _left, _, _right = children
 
+        left = self.visit(_left)
+        right = self.visit(_right)
+
+        return LogicalOr(left, right)
 
     # Visit a parse tree produced by SmallCParser#conjunction.
     def visitConjunction(self, ctx:SmallCParser.ConjunctionContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.ComparisonContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        _left, _, _right = children
+
+        left = self.visit(_left)
+        right = self.visit(_right)
+
+        return LogicalAnd(left, right)
 
 
     # Visit a parse tree produced by SmallCParser#comparison.
     def visitComparison(self, ctx:SmallCParser.ComparisonContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.RelationContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        _left, _op, _right = children
+
+        left = self.visit(_left)
+        op = _op.getText()
+        right = self.visit(_right)
+
+        if op == '==':
+            return Equals(left, right)
+        if op == '!=':
+            return NotEquals(left, right)
+
 
 
     # Visit a parse tree produced by SmallCParser#relation.
@@ -398,8 +422,7 @@ class ASTVisitor(SmallCVisitor):
     def visitPlus(self, ctx:SmallCParser.PlusContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.TimesContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
         _left, _op, _right  = children
@@ -418,8 +441,7 @@ class ASTVisitor(SmallCVisitor):
     def visitTimes(self, ctx:SmallCParser.TimesContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.CastContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
         _left, _op, _right  = children
@@ -438,8 +460,7 @@ class ASTVisitor(SmallCVisitor):
     def visitCast(self, ctx:SmallCParser.CastContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.UnaryContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
         # ( declarationSpecifiers pointer ) cast
@@ -455,8 +476,7 @@ class ASTVisitor(SmallCVisitor):
     def visitUnary(self, ctx:SmallCParser.UnaryContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.PostfixContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
         # ('++' | '--') unary | ('&' | '*' | '!' | '+' | '-') cast
@@ -485,8 +505,7 @@ class ASTVisitor(SmallCVisitor):
     def visitPostfix(self, ctx:SmallCParser.PostfixContext):
         children = list(ctx.getChildren())
 
-        if isinstance(children[0], SmallCParser.PrimaryContext):
-            # fall through
+        if len(children) == 1:
             return self.visit(children[0])
 
         subject = self.visit(children[0])
@@ -523,8 +542,8 @@ class ASTVisitor(SmallCVisitor):
     def visitPrimary(self, ctx:SmallCParser.PrimaryContext):
         children = list(ctx.getChildren())
 
+        # constant
         if isinstance(children[0], SmallCParser.ConstantContext):
-            # fall through
             return self.visit(children[0])
 
         # Identifier
@@ -558,4 +577,6 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#expressionList.
     def visitExpressionList(self, ctx:SmallCParser.ExpressionListContext):
-        raise NotImplementedError()
+        declarations = [self.visit(c) for c in ctx.getChildren()
+            if isinstance(c, SmallCParser.AssignmentContext)]
+        return declarations

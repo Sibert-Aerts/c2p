@@ -116,9 +116,9 @@ def serializedATN():
         buf.write("\f\3\2\2\u00eb\u00ec\7\6\2\2\u00ec\u00ee\5,\27\2\u00ed")
         buf.write("\u00ea\3\2\2\2\u00ee\u00f1\3\2\2\2\u00ef\u00ed\3\2\2\2")
         buf.write("\u00ef\u00f0\3\2\2\2\u00f0+\3\2\2\2\u00f1\u00ef\3\2\2")
-        buf.write("\2\u00f2\u00f3\5> \2\u00f3\u00f4\5F$\2\u00f4\u00f5\5*")
-        buf.write("\26\2\u00f5\u00f8\3\2\2\2\u00f6\u00f8\5.\30\2\u00f7\u00f2")
-        buf.write("\3\2\2\2\u00f7\u00f6\3\2\2\2\u00f8-\3\2\2\2\u00f9\u0101")
+        buf.write("\2\u00f2\u00f8\5.\30\2\u00f3\u00f4\5> \2\u00f4\u00f5\5")
+        buf.write("F$\2\u00f5\u00f6\5*\26\2\u00f6\u00f8\3\2\2\2\u00f7\u00f2")
+        buf.write("\3\2\2\2\u00f7\u00f3\3\2\2\2\u00f8-\3\2\2\2\u00f9\u0101")
         buf.write("\5\60\31\2\u00fa\u00fb\5\60\31\2\u00fb\u00fc\7\32\2\2")
         buf.write("\u00fc\u00fd\5*\26\2\u00fd\u00fe\7\33\2\2\u00fe\u00ff")
         buf.write("\5.\30\2\u00ff\u0101\3\2\2\2\u0100\u00f9\3\2\2\2\u0100")
@@ -1780,6 +1780,10 @@ class SmallCParser ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
 
+        def condition(self):
+            return self.getTypedRuleContext(SmallCParser.ConditionContext,0)
+
+
         def unary(self):
             return self.getTypedRuleContext(SmallCParser.UnaryContext,0)
 
@@ -1790,10 +1794,6 @@ class SmallCParser ( Parser ):
 
         def expression(self):
             return self.getTypedRuleContext(SmallCParser.ExpressionContext,0)
-
-
-        def condition(self):
-            return self.getTypedRuleContext(SmallCParser.ConditionContext,0)
 
 
         def getRuleIndex(self):
@@ -1827,17 +1827,17 @@ class SmallCParser ( Parser ):
             if la_ == 1:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 240
-                self.unary()
-                self.state = 241
-                self.assignmentOperator()
-                self.state = 242
-                self.expression(0)
+                self.condition()
                 pass
 
             elif la_ == 2:
                 self.enterOuterAlt(localctx, 2)
-                self.state = 244
-                self.condition()
+                self.state = 241
+                self.unary()
+                self.state = 242
+                self.assignmentOperator()
+                self.state = 243
+                self.expression(0)
                 pass
 
 
