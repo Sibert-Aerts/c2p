@@ -21,6 +21,8 @@ class CType:
     def ptype(self) -> PType:
         raise NotImplementedError()
 
+    def __repr__(self):
+        return self.__class__.__name__
 
 class CVoid(CType):
     def ptype(self) -> PType:
@@ -50,6 +52,9 @@ class CPointer(CType):
     def ptype(self) -> PType:
         return PAddress
 
+    def __repr__(self):
+        return '{0}({1})'.format(self.__class__.__name__, self.t.__repr__())
+
 
 class CArray(CType):
     def __init__(self, t: CType) -> None:
@@ -59,6 +64,8 @@ class CArray(CType):
     def ptype(self) -> PType:
         return PAddress
 
+    def __repr__(self):
+        return '{0}({1})'.format(self.__class__.__name__, self.t.__repr__())
 
 class CConst(CType):
     def __init__(self, t: CType) -> None:
@@ -67,5 +74,8 @@ class CConst(CType):
 
     def ptype(self) -> PType:
         return self.t.ptype()
+
+    def __repr__(self):
+        return '{0}({1})'.format(self.__class__.__name__, self.t.__repr__())
 
 fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar()}
