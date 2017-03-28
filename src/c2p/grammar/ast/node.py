@@ -77,7 +77,7 @@ ForStatement = NamedTuple('ForStatement', [
 ])
 BreakStatement = NamedTuple('BreakStatement', [])
 ContinueStatement = NamedTuple('ContinueStatement', [])
-ReturnStatement = NamedTuple('ReturnStatement', [('expression', Expression)])
+ReturnStatement = NamedTuple('ReturnStatement', [('expression', Optional[Expression])])
 ExprStatement = NamedTuple('ExprStatement', [('expression', Optional[Expression])])
 CompoundStatement = NamedTuple('CompoundStatement', [
     ('statements', List[Union[Declaration, Statement]])

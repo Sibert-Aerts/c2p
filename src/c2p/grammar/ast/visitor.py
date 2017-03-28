@@ -176,8 +176,13 @@ class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#returnStatement.
     def visitReturnStatement(self, ctx:SmallCParser.ReturnStatementContext):
-        _, _expr, _ = list(ctx.getChildren())
-        return ReturnStatement(self.visit(_expr))
+        children = list(ctx.getChildren())
+        
+        # return expression ;
+        if len(children) == 3:
+            return ReturnStatement(self.visit(children[1]))
+        # return;
+        return ReturnStatement(None)
 
 
     # Visit a parse tree produced by SmallCParser#exprStatement.
@@ -397,16 +402,16 @@ class ASTVisitor(SmallCVisitor):
             # fall through
             return self.visit(children[0])
 
-        _plus, _op, _times = children
+        _left, _op, _right  = children
         
-        plus = self.visit(_plus)
-        times = self.visit(_times)
+        left = self.visit(_left)
         op = _op.getText()
+        right = self.visit(_right)
 
         if op == '+':
-            return Add(plus, times)
+            return Add(left, right)
         if op == '-':
-            return Subtract(plus, times)
+            return Subtract(left, right)
 
 
     # Visit a parse tree produced by SmallCParser#times.
@@ -417,7 +422,16 @@ class ASTVisitor(SmallCVisitor):
             # fall through
             return self.visit(children[0])
 
-        raise NotImplementedError()
+        _left, _op, _right  = children
+        
+        left = self.visit(_left)
+        op = _op.getText()
+        right = self.visit(_right)
+
+        if op == '*':
+            return Multiply(left, right)
+        if op == '/':
+            return Divide(left, right)
 
 
     # Visit a parse tree produced by SmallCParser#cast.

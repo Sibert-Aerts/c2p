@@ -15,7 +15,7 @@ whileStatement: 'while' '(' expression ')' statement;
 forStatement: 'for' '(' (declaration | expression? ';') expression? ';' expression? ')' statement;
 breakStatement: 'break' ';';
 continueStatement: 'continue' ';';
-returnStatement: 'return' expression ';';
+returnStatement: 'return' expression? ';';
 exprStatement: expression? ';';
 
 // Declarations and types
