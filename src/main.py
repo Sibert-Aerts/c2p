@@ -18,7 +18,8 @@ def run(argv):
         print(ASTVisitor().visit(tree))
     except:
         exceptiondata = traceback.format_exc().splitlines()
-        print('Encountered {0}: \n{1}'.format(exceptiondata[-1], exceptiondata[-3]))
+        print('Encountered {0}:'.format(exceptiondata[-1]))
+        [print(l) for l in exceptiondata[-3:-1]]
         
 if __name__ == '__main__':
     run(sys.argv)
