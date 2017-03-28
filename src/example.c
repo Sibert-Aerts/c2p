@@ -1,9 +1,11 @@
-const int const *const**const* main(int argc, char **argv, int test[], char *(*pest)[20]) {
+const int const *const**const*const main(int argc, char **argv, int test[], char *(*pest)[20]) {
 
-	;"C";;;;;'C'; // C
+	;
+	17; 
+	"C";
+	'C'; // C
 	const const const const int;
 	const const float const const * const * x = 6;
-	17;;;; 
 	int bono = -2;
 	char const_ = 2;
 	float bloat = 7.0;
