@@ -6,6 +6,7 @@ from antlr4 import * # type: ignore
 from c2p.grammar.antlr.SmallCLexer import SmallCLexer
 from c2p.grammar.antlr.SmallCParser import SmallCParser
 from c2p.grammar.ast.visitor import ASTVisitor
+from c2p.grammar.ast.visualize import Visualiser
 
 def run(argv):
     if len(argv) < 2:
@@ -15,7 +16,10 @@ def run(argv):
     tree = parser.program()
 
     try:
-        print(ASTVisitor().visit(tree))
+        AST = ASTVisitor().visit(tree)
+        f = open('out.dot', 'w')
+        f.write(Visualiser.to_dot(AST))
+        print("AST generation successful. Output written to \'out.dot\'")
     except:
         exceptiondata = traceback.format_exc().splitlines()
         print('Encountered {0}:'.format(exceptiondata[-1]))
