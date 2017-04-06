@@ -17,9 +17,12 @@ def run(argv):
 
     try:
         AST = ASTVisitor().visit(tree)
+
         f = open('out.dot', 'w')
-        f.write(Visualiser.to_dot(AST))
+        f.write(Visualiser.make_dot(AST))
         print("AST generation successful. Output written to \'out.dot\'")
+
+        
     except:
         exceptiondata = traceback.format_exc().splitlines()
         print('Encountered {0}:'.format(exceptiondata[-1]))

@@ -9,13 +9,15 @@ class Visualiser:
         Visualiser.id += 1
         return Visualiser.id
 
-    def to_dot(ast):
+    # Convert an AST into a full DOT file
+    def make_dot(ast):
         formatStr = \
             'digraph tree{{\nrankdir=TD\n{0}}}'
-        rootId, dotList = Visualiser.to_dot_list(ast)
+        rootId, dotList = Visualiser.ast_to_dot(ast)
         return formatStr.format(dotList)
 
-    def to_dot_list(item):
+    # Convert an AST node and its children into a series of DOT statements
+    def ast_to_dot(item):
         myId = Visualiser.getId()
 
         stmts = '{0}[label={1}]'.format(myId, item.__class__.__name__) + '\n'
@@ -39,13 +41,14 @@ class Visualiser:
             elif isinstance(c, list):
                 # just append the elements in a list to the same parent node
                 for q in c:
-                    stmts += makeStmts(Visualiser.to_dot_list(q), field)
+                    stmts += makeStmts(Visualiser.ast_to_dot(q), field)
 
             else:
-                stmts += makeStmts(Visualiser.to_dot_list(c), field)
+                stmts += makeStmts(Visualiser.ast_to_dot(c), field)
 
         return myId, stmts
 
+    # Convert a CType (and its children) into a series of DOT statements
     def ctype_to_dot(item):
         myId = Visualiser.getId()
 
@@ -60,11 +63,13 @@ class Visualiser:
 
         return myId, stmts
 
+    # Convert a numeric value (or None) into a DOT statement
     def num_to_dot(item):
         myId = Visualiser.getId()
         stmts = '{0}[label={1}, shape=square]'.format(myId, item) + '\n'
         return myId, stmts
 
+    # Convert a string value into a DOT statement
     def str_to_dot(item):
         myId = Visualiser.getId()
         stmts = '{0}[label="\\"{1}\\"", shape=square]'.format(myId, item) + '\n'
