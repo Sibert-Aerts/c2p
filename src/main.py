@@ -7,6 +7,7 @@ from c2p.grammar.antlr.SmallCLexer import SmallCLexer
 from c2p.grammar.antlr.SmallCParser import SmallCParser
 from c2p.grammar.ast.visitor import ASTVisitor
 from c2p.grammar.ast.visualize import Visualiser
+from c2p.codegen.codegen import *
 
 def run(argv):
     if len(argv) < 2:
@@ -22,6 +23,10 @@ def run(argv):
         f.write(Visualiser.make_dot(AST))
         print("AST generation successful. Output written to \'out.dot\'")
 
+        code = make_code(AST)
+        print('CODE:')
+        for l in code:
+            print(l)
         
     except:
         exceptiondata = traceback.format_exc().splitlines()
