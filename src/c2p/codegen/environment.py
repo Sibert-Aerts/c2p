@@ -11,26 +11,28 @@ EnvironmentNode = NamedTuple('EnvironmentNode', [
 ])
 
 class Environment:
+    '''An object holding a dictionary of all declared variables reachable from a certain scope.'''
+
     def __init__(self):
         self.variables = {}
         self.depth = 0
         self.offset = 0
 
-    # Returns a copy of the current Environment, to be used in a deeper scope
     def deepen(self):
+        '''Returns a copy of the current Environment, to be used in a deeper scope'''
         clone = copy.deepcopy(self)
         clone.depth = self.depth + 1
         return clone
 
-    # Allocates a spot of size `size` to the stack for the rest of the scope's duration
     def stack_alloc(self, size : int) -> int:
+        '''Allocates a spot of size `size` to the stack for the rest of the scope's duration'''
         addr = self.offset
         self.offset += size
         return addr
-
-    # Registers a variable to the current scope, and all nested scopes within it
-    # Overrides existing variables of the same name if they were defined in a higher scope
+    
     def register_variable(self, name : str, ctype : CType) -> None:
+        '''Registers a variable to the current scope, and all nested scopes within it
+        Overrides existing variables of the same name if they were defined in a higher scope'''
         repeatDeclaration = False
         try:
             var = self.variables[name]
@@ -46,6 +48,7 @@ class Environment:
         self.variables[name] = EnvironmentNode(ctype, ptype, address, self.depth)
 
     def get_address(self, name : str) -> int:
+        '''Get the address of the specified variable, if it exists.'''
         try:
             var = self.variables[name]
             return var.address
@@ -56,6 +59,7 @@ class Environment:
 
     # Get the type of a variable in the current scope
     def get_type(self, name : str) -> CType:
+        '''Get the type of the specified variable, if it exists.'''
         try:
             var = self.variables[name]
             return var.ctype
