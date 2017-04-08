@@ -33,9 +33,19 @@ class Ixj(PInstruction):
 
 class Label(PInstruction):
     """A P-machine label. (This isn't really an instruction.)"""
+    labels = []
+    count = {}
 
     def __init__(self, label: str) -> None:
-        self.label = label
+        if label not in labels:
+            labels.append(label)
+            count[label] = 0
+            self.label = label
+        else:
+            while(label + str(count[label]) in labels):
+                count[label] += 1
+            labels.append(label + str(count[label]))
+            self.label = newLabel
 
     def emit(self) -> str:
         return '%s:' % self.label
