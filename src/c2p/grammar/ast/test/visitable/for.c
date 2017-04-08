@@ -4,7 +4,6 @@ int main(){
         float y = 5;
     }
 
-    int x;
     for(x = 27; x < 0; x++){
         float y = 5;
     }

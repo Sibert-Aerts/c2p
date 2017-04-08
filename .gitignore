@@ -94,3 +94,6 @@ ENV/
 .ropeproject
 
 .vscode/
+
+*.dot
+*.out
