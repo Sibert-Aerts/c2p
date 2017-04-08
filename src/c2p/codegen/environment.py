@@ -47,22 +47,10 @@ class Environment:
         address = self.stack_alloc(ptype.size())
         self.variables[name] = EnvironmentNode(ctype, ptype, address, self.depth)
 
-    def get_address(self, name : str) -> int:
+    def get_var(self, name : str) -> int:
         '''Get the address of the specified variable, if it exists.'''
         try:
-            var = self.variables[name]
-            return var.address
-        except KeyError:
-            pass
-        raise ValueError('Non-existant variable {0}'.format(name))
-
-
-    # Get the type of a variable in the current scope
-    def get_type(self, name : str) -> CType:
-        '''Get the type of the specified variable, if it exists.'''
-        try:
-            var = self.variables[name]
-            return var.ctype
+            return self.variables[name]
         except KeyError:
             pass
         raise ValueError('Non-existant variable {0}'.format(name))

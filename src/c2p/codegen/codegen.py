@@ -1,5 +1,7 @@
 from .environment import *
+from .expression_to_lcode import *
 from c2p.grammar import *
+from c2p.instructions import *
 from c2p.grammar.ast.node_methods import *
 
 def make_code(AST):
