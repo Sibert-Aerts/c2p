@@ -24,6 +24,9 @@ class CType:
     def __repr__(self):
         return self.__class__.__name__
 
+    def ignoreConst(self):
+        return self
+
 class CVoid(CType):
     def ptype(self) -> PType:
         raise ValueError('void has no PType!')
@@ -44,38 +47,30 @@ class CFloat(CType):
         return PReal
 
 
-class CPointer(CType):
+class CLayerType(CType):
     def __init__(self, t: CType) -> None:
         super().__init__()
         self.t = t
-
-    def ptype(self) -> PType:
-        return PAddress
 
     def __repr__(self):
         return '{0}({1})'.format(self.__class__.__name__, self.t.__repr__())
 
+    def ignoreConst(self):
+        return self.__class__(self.t.ignoreConst())
 
-class CArray(CType):
-    def __init__(self, t: CType) -> None:
-        super().__init__()
-        self.t = t
-
+class CPointer(CLayerType):
     def ptype(self) -> PType:
         return PAddress
 
-    def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__, self.t.__repr__())
+class CArray(CLayerType):
+    def ptype(self) -> PType:
+        return PAddress
 
-class CConst(CType):
-    def __init__(self, t: CType) -> None:
-        super().__init__()
-        self.t = t
-
+class CConst(CLayerType):
     def ptype(self) -> PType:
         return self.t.ptype()
 
-    def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__, self.t.__repr__())
+    def ignoreConst(self):
+        return self.t.ignoreConst()
 
 fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar()}
