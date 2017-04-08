@@ -1,7 +1,8 @@
 from .environment import *
 from .expression_to_lcode import *
+from .expression_to_code import *
 from c2p.grammar import *
-from c2p.instructions import *
+from c2p import instructions
 from c2p.grammar.ast.node_methods import *
 
 def make_code(AST):
@@ -11,10 +12,9 @@ def make_code(AST):
 
 def program_to_code(self, env : Environment) -> List:
     code = []
-    code.append('start:')
     for child in self.declarations:
-        code += child.to_code(env)
-    code.append('end:')
+        c, _ = child.to_code(env)
+        code += c
     return code
 
 Program.to_code = program_to_code
@@ -37,10 +37,23 @@ def declaration_to_code(self, env : Environment) -> List:
 
 Declaration.to_code = declaration_to_code
 
-def assignment_to_code(self, env : Environment) -> List:
+def funcdef_to_code(self, env : Environment) -> List:
     code = []
-    # figure this out lol
+
+    name = self.name
+    returnType = self.returnType
+    parameters = [p.to_ctype() for p in self.parameters]
+    signature = [p[0] for p in parameters]
+
+    label = env.register_function(name, returnType, signature)
+    
+    # Append the label pointing to this function
+    code.append(label)
+
+    
+
+    # haha, lol
     raise NotImplementedError()
     return code
 
-Assignment.to_code = assignment_to_code
+FunctionDefinition.to_code = funcdef_to_code

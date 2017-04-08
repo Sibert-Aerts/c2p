@@ -26,7 +26,10 @@ def run(argv):
         code = make_code(AST)
         print('CODE:')
         for l in code:
-            print(l)
+            try:
+                print(l.emit())
+            except:
+                print(l)
         
     except:
         exceptiondata = traceback.format_exc().splitlines()

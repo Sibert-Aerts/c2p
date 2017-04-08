@@ -1,20 +1,29 @@
 from c2p.ptypes import *
 from c2p.grammar.ctypes import *
 from typing import Any, List, NamedTuple, Optional, Union
+from c2p.instructions.branch import Label
 import copy
 
-EnvironmentNode = NamedTuple('EnvironmentNode', [
+
+VariableRecord = NamedTuple('VariableRecord', [
     ('ctype', CType),
     ('ptype', PType),
     ('address', int),
     ('depth', int),
 ])
 
+
+FunctionRecord = NamedTuple('FunctionRecord', [
+    ('returnType', CType),
+    ('signature', List[CType]),
+    ('label', Label),
+])
+
 class Environment:
     '''An object holding a dictionary of all declared variables reachable from a certain scope.'''
 
     def __init__(self):
-        self.variables = {}
+        self.symbols = {}
         self.depth = 0
         self.offset = 0
 
@@ -33,24 +42,57 @@ class Environment:
     def register_variable(self, name : str, ctype : CType) -> None:
         '''Registers a variable to the current scope, and all nested scopes within it
         Overrides existing variables of the same name if they were defined in a higher scope'''
-        repeatDeclaration = False
+        
         try:
-            var = self.variables[name]
-            repeatDeclaration = (var.depth == self.depth)
-        except:
+            s = self.symbols[name]
+            if isinstance(s, FunctionRecord):
+                raise ValueError('Attempted to declare symbol "{}" as a variable when it is a function.'.format(name))
+            if s.depth == self.depth:
+                raise ValueError('Repeated declaration of variable "{}"'.format(name))
+        except KeyError:
             pass
-
-        if repeatDeclaration:
-            raise ValueError('Repeated declaration of variable {0}'.format(name))
+        except ValueError as e:
+            raise e
 
         ptype = ctype.ptype()
         address = self.stack_alloc(ptype.size())
-        self.variables[name] = EnvironmentNode(ctype, ptype, address, self.depth)
+        self.symbols[name] = VariableRecord(ctype, ptype, address, self.depth)
 
-    def get_var(self, name : str) -> int:
-        '''Get the address of the specified variable, if it exists.'''
+    def get_var(self, name : str) -> VariableRecord:
+        '''Get the record of the specified variable, if it exists.'''
         try:
-            return self.variables[name]
+            var = self.symbols[name]
+            if isinstance(var, FunctionRecord):
+                raise ValueError('Attempted to use symbol "{}" as a variable when it is a function.'.format(name))
+            return var
+        except KeyError:
+            raise ValueError('Use of nonexistent variable "{}"'.format(name))
+        except ValueError as e:
+            raise e
+    
+    def register_function(self, name : str, returnType : CType, signature : List[CType]) -> Label:
+        '''Registers a function to the global scope and get its label.'''
+        
+        try:
+            s = self.symbols[name]
+            raise ValueError('Repeated declaration of function "{}"'.format(name))
         except KeyError:
             pass
-        raise ValueError('Non-existant variable {0}'.format(name))
+        except ValueError as e:
+            raise e
+
+        label = Label('f_{}'.format(name))
+        self.symbols[name] = FunctionRecord(returnType, signature, label)
+        return label
+
+    def get_func(self, name : str) -> FunctionRecord:
+        '''Get the record of the specified function, if it exists.'''
+        try:
+            func = self.symbols[name]
+            if isinstance(func, VariableRecord):
+                raise ValueError('Attempted to use symbol {} as a function when it is a variable.'.format(name))
+            return func
+        except KeyError:
+            raise ValueError('Use of nonexistent function {}'.format(name))
+        except ValueError as e:
+            raise e

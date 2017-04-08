@@ -1,9 +1,8 @@
 from .node import *
 from c2p.grammar.ctypes import *
 
-# CType synthesis from declarator 'types':
+# CType (and name) synthesis from declarator 'types' and a given base type:
 # int *x, y[]   →   (CPointer(CInt), "x") and (CArray(CInt), "y")
-# So we need to tell each type of Declarator how to make a CType.
 
 def identdecl_to_ctype(self, declType : CType) -> (CType, str):
     return (declType, self.identifier.name)
@@ -27,3 +26,9 @@ def arrdecl_to_ctype(self, declType : CType) -> (CType, str):
     return (CArray(innerType), name)
 
 ArrayDeclarator.to_ctype = arrdecl_to_ctype
+
+
+def param_to_ctype(self) -> (CType, str):
+    return self.declarator.to_ctype(self.type)
+
+ParameterDeclaration.to_ctype 

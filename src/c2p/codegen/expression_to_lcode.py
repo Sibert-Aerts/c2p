@@ -1,6 +1,6 @@
 from .environment import *
 from c2p.grammar import *
-from c2p.instructions import *
+from c2p import instructions
 from c2p.grammar.ast.node_methods import *
 
 # All expressions incapable of producing L-Values use this for their to_lcode method
@@ -98,10 +98,9 @@ def ident_to_lcode(self, env : Environment) -> (List, CType):
 
     var = env.get_var(self.identifier.name)
     
-    # TODO: stored address needs to be relative from (stack ptr + # protected spots)
-    # so replace this dumb Ldo with a smarter LoadVariable(name, env) or something
-    # once we figure out how calls will happen
-    code.append(Ldo(var.ptype, var.address))
+    # TODO: address needs to be relative from (stack ptr + # protected spots)
+    # so replace this dumb Ldc with a smarter system
+    code.append(instructions.Ldc(PAddress, var.address))
     
     return (code, var.ctype)
 
