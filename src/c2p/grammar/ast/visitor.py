@@ -548,7 +548,7 @@ class ASTVisitor(SmallCVisitor):
 
         # Identifier
         if children[0].symbol.type == SmallCParser.Identifier:
-            return Identifier(children[0].getText())
+            return IdentifierExpression(Identifier(children[0].getText()))
             
         # ( expression )
         if isinstance(children[1], SmallCParser.ExpressionContext):

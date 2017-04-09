@@ -31,4 +31,4 @@ ArrayDeclarator.to_ctype = arrdecl_to_ctype
 def param_to_ctype(self) -> (CType, str):
     return self.declarator.to_ctype(self.type)
 
-ParameterDeclaration.to_ctype 
+ParameterDeclaration.to_ctype  = param_to_ctype
