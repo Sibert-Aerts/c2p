@@ -1,4 +1,5 @@
 from .environment import *
+from .code_node import CodeNode
 from c2p.grammar import *
 from c2p import instructions
 from c2p.grammar.ast.node_methods import *
@@ -46,64 +47,72 @@ Expression.to_code = expr_to_code
 '''
 
 
-def comma_to_code(self, env : Environment) -> (List, CType):
-    code = []
+def comma_to_code(self, env : Environment) -> CodeNode:
+    code = CodeNode()
     
     # Just treat the left hand side as an individual expression and move on.
-    c, _ = ExprStatement(self.left).to_code(env)
-    code += c
-    c, t = self.right.to_code(env)
-    code += c
+    cl = ExprStatement(self.left).to_code(env)
+    code.add(cl)
+    cr = self.right.to_code(env)
+    code.add(cr)
+    code.type = cr.type
 
-    return (code, t)
+    code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace)
+
+    return code
 
 Comma.to_code = comma_to_code
 
 
-def assignment_to_code(self, env : Environment) -> (List, CType):
-    code = []
+def assignment_to_code(self, env : Environment) -> CodeNode:
+    code = CodeNode()
     
     # Load the left hand side as an L-Value, right hand side as an R-Value, and write R to L
-    c, tl = self.left.to_lcode(env)
-    code += c
-    c, tr = self.right.to_code(env)
-    code += c
+    cl = self.left.to_lcode(env)
+    code.add(cl)
+    cr = self.right.to_code(env)
+    code.add(cr)
 
 
-    if(tl != tr.ignoreConst()):
-        raise ValueError('Incompatible assignment of {} to {}.'.format(tr, tl))
+    if(cl.type != cr.type.ignoreConst()):
+        raise ValueError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
 
-    code.append(instructions.Sto(tl.ptype()))
+    code.add(instructions.Sto(cl.type.ptype()))
 
-    return (code, tl)
+    code.type = cl.type
+    code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 1)
+
+    return code
 
 Assignment.to_code = assignment_to_code
 
 
 
-def const_to_code(self, env : Environment) -> (List, CType):
-    code = []
+def const_to_code(self, env : Environment) -> CodeNode:
+    code = CodeNode()
 
-    t = self.type
+    code.type = self.type
     val = self.value
     
     # TODO: Do we need to convert val to something here?
-    code.append(instructions.Ldc(t.ptype(), val))
+    code.add(instructions.Ldc(code.type.ptype(), val))
 
-    return (code, t)
+    code.maxStackSpace = 1
+
+    return code
 
 Constant.to_code = const_to_code
 
-def ident_to_code(self, env : Environment) -> (List, CType):
-    code = []
+def ident_to_code(self, env : Environment) -> CodeNode:
+    code = CodeNode()
 
     var = env.get_var(self.identifier.name)
 
-    # TODO: stored address needs to be relative from (stack ptr + # protected spots)
-    # so replace this dumb Ldo with a smarter LoadVariable(name, env) or something
-    # once we figure out how stack frames look like
-    code.append(instructions.Ldo(var.ptype, var.address))
+    code.add(instructions.Ldo(var.ptype, var.address))
+    code.type = var.ctype
 
-    return (code, var.ptype)
+    code.maxStackSpace = 1
+
+    return code
 
 IdentifierExpression.to_code = ident_to_code

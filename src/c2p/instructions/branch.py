@@ -37,14 +37,14 @@ class Label(PInstruction):
     count = {}
 
     def __init__(self, label: str) -> None:
-        if label not in labels:
-            labels.append(label)
-            count[label] = 0
+        if label not in self.labels:
+            self.labels.append(label)
+            self.count[label] = 0
             self.label = label
         else:
-            while(label + str(count[label]) in labels):
-                count[label] += 1
-            labels.append(label + str(count[label]))
+            while(label + str(self.count[label]) in self.labels):
+                self.count[label] += 1
+            self.labels.append(label + str(self.count[label]))
             self.label = newLabel
 
     def emit(self) -> str:

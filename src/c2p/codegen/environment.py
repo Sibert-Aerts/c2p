@@ -25,7 +25,8 @@ class Environment:
     def __init__(self):
         self.symbols = {}
         self.depth = 0
-        self.offset = 0
+        # Variable data space starts at 5
+        self.offset = 5
 
     def deepen(self):
         '''Returns a copy of the current Environment, to be used in a deeper scope'''
