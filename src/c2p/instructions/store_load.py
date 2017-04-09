@@ -55,3 +55,60 @@ class Sto(PInstruction):
 
     def emit(self) -> str:
         return 'sto %s' % self.t.letter
+
+
+# These are load/store helpers for "difference in nesting depths", using a helper function
+#
+#     base(p, a) = if p == 0 then a else base(p - 1, STORE[a + 1]).
+#
+# So basically for p = 0, Lod loads the variable relative to the start of the current frame.
+
+
+class Lod(PInstruction):
+    '''
+    Push a value from p frames earlier, at distance q from that frame pointer.
+    
+    SP := SP + 1; 
+    STORE[SP] := STORE[base(p, MP) + q] (of type T)
+    '''
+
+    def __init__(self, t: PType, p: int, q: int) -> None:
+        self.t = t
+        self.p = p
+        self.q = q
+
+    def emit(self) -> str:
+        return 'lod %s %d %d' % (self.t.letter, self.p, self.q)
+
+
+class Lda(PInstruction):
+    '''
+    Push the address of a value from p frames earlier, at distance q from that frame pointer.
+
+    SP := SP + 1; 
+    STORE[SP] := base(p, MP) + q
+    '''
+
+    def __init__(self, p: int, q: int) -> None:
+        self.p = p
+        self.q = q
+
+    def emit(self) -> str:
+        return 'lda %d %d' % (self.p, self.q)
+
+
+class Str(PInstruction):
+    '''
+    Pop a value and store it p frames earlier, at distance q from that frame pointer.
+
+    STORE[base(p, MP) + q] := STORE[SP] (of type T); 
+    SP := SP - 1
+    '''
+
+    def __init__(self, t: PType, p: int, q: int) -> None:
+        self.t = t
+        self.p = p
+        self.q = q
+
+    def emit(self) -> str:
+        return 'str %s %d %d' % (self.t.letter, self.p, self.q)

@@ -11,14 +11,17 @@ from ..ptypes import PType
 
 class Mst(PInstruction):
     '''
-    p is the depth of the method's definition - the method's use which, in C, is always just 1 I think
+    Mark Stack instruction: 
+    Stores the static link, dynamic link and extreme stack pointer on the stack, and increments
+    the stack pointer to point to the parameter area of the upcoming procedure call. 
+
+    p = (1 + level of the calling procedure - level of the called procedure).
+    In C all procedures are defined in level 0, so p is always 1, except for the call to 'main'.
 
     STORE[SP + 2] := base(p, MP)    # static link AKA pointless in C?
     STORE[SP + 3] := MP             # dynamic link AKA pointer to current stack frame
     STORE[SP + 4] := EP             # Max stack size, to prevent stack/heap collission
-    SP := SP + 5 
-
-    The parameters can now be evaluated starting from STORE[SP + 1]
+    SP := SP + 5                    # The parameters can now be evaluated starting from STORE[SP + 1]
     '''
     def __init__(self, p: int) -> None:
         self.p = p
@@ -29,7 +32,11 @@ class Mst(PInstruction):
 
 class Cup(PInstruction):
     '''
-    p is the storage requirement for the method's parameters
+    Call User Procedure instruction:
+    Sets the new value for MP (the frame pointer), saves the return address
+    and finally branches to the given procedure label.
+
+    p is the storage requirement for the called procedure's parameters
     label is the procedure's label
 
     MP := SP – (p + 4)      # Make a new stack frame?
@@ -77,9 +84,11 @@ class Sep(PInstruction):
 
 class Ent(PInstruction):
     '''
-    Sequence of Ssp and Sep: Make space and check for collission of stack and heap?
-    q is data area size,
-    p is max depth of local stack. 
+    Enter a procedure:
+    Makes space for local data (q), and local stack(p).
+
+    p is max depth of local stack, 
+    q is data area size.
 
     SP := MP + q – 1
     EP := SP + p
