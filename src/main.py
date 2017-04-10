@@ -19,19 +19,29 @@ def run(argv):
     try:
         AST = ASTVisitor().visit(tree)
 
-        f = open('out.dot', 'w')
+        dotFileName = 'AST.dot'
+        f = open(dotFileName, 'w')
         f.write(Visualiser.make_dot(AST))
-        print("AST generation successful. Output written to \'out.dot\'")
+        print('AST generation successful. Output written to \'{}\''.format(dotFileName))
 
         code = make_code(AST)
         print('CODE:')
+        codeText = ''
         for l in code:
             try:
-                print(l.emit())
+                codeText += l.emit()
             except:
-                print(l)
+                codeText += l
+            codeText += '\n'
+        print(codeText)
+
+        codeFileName = 'code.p'
+        p = open(codeFileName, 'w')
+        p.write(codeText)
+        print('Code generation successful. Output written to \'{}\''.format(codeFileName))
         
     except:
+        # Don't print a gigantic stack trace each time.
         exceptiondata = traceback.format_exc().splitlines()
         print('Encountered {0}:'.format(exceptiondata[-1]))
         [print(l) for l in exceptiondata[-3:-1]]

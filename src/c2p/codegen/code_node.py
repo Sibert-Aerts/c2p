@@ -5,7 +5,7 @@ class CodeNode:
         # Data useful to higher-up nodes
         self.type = None            # By and for Expressions
         self.maxStackSpace = 0      # By expressions, for methods
-        self.maxVarSpace = 0        # By code blocks, for methods
+        self.foundMain = False      # By function defs, for Program
 
     def add(self, other) -> None:
         '''Add a new instruction, or append all instructions from another node.'''

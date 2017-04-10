@@ -14,10 +14,37 @@ def make_code(AST):
 def program_to_code(self, env : Environment) -> CodeNode:
     code = CodeNode()
 
+    declCode = CodeNode()
+    methCode = CodeNode()
+
     for child in self.declarations:
         c = child.to_code(env)
-        code.add(c)
-        code.maxVarSpace += c.maxVarSpace
+
+        if isinstance(child, Declaration):
+            # TODO: global variable space / binding?
+            declCode.add(c)
+        else:
+            methCode.add(c)
+        
+        code.foundMain = code.foundMain or c.foundMain
+
+    # the amount of space global variables take up is just the amount of space all vars in level 0 take up
+    varSpace = env.symbols.varSpace
+
+    # TODO: Find an instruction that makes space for (uninitialised) variables.
+    for i in range(5 + varSpace):
+        code.add(instructions.Ldc(PAddress, 0))
+
+    # First: initialise global variables
+    code.add(declCode)
+    # Second: jump to the main function
+    # TODO: replace by a function call to main?
+    code.add(instructions.Ujp('f_main'))
+    # Finally: Big block of method code.
+    code.add(methCode)
+
+    if not code.foundMain:
+        raise ValueError('No \'main\' method found.')
 
     return code
 
@@ -29,19 +56,18 @@ def declaration_to_code(self, env : Environment) -> CodeNode:
     for decl in self.initDeclarators:
         declType, name = decl.declarator.to_ctype(self.type)
         env.register_variable(name, declType)
-        # Increase the size of the variable space
-        code.maxVarSpace += declType.ptype().size()
         
         if decl.init != None:
-            # An initialiser is just an assignment
-            node = Assignment(left=IdentifierExpression(Identifier(name)), right=decl.init)
-            c = node.to_code(env)
+            # An initialiser is just an assignment, except it can also assign to const variables...
+            # TODO: Initialisation of const variables
+            init = Assignment(left=IdentifierExpression(Identifier(name)), right=decl.init)
+            c = init.to_code(env)
             code.add(c)
 
             # max stack space depends entirely on the max. required by any of the init assignments
             code.maxStackSpace = max(code.maxStackSpace, c.maxStackSpace)
         else:
-            # default initialisers?
+            # TODO: default initialisation?
             pass
 
     return code
@@ -52,6 +78,8 @@ def funcdef_to_code(self, env : Environment) -> CodeNode:
     code = CodeNode()
 
     name = self.name
+    code.foundMain = (name == 'main')
+
     returnType = self.returnType
     # `parameters` is a list of tuples (CType, str)
     parameters = [p.to_ctype() for p in self.parameters]
@@ -69,17 +97,22 @@ def funcdef_to_code(self, env : Environment) -> CodeNode:
     code.add(label)
 
 
-    # Make a deeper instance of the current environment
-    bodyEnv = env.deepen()
-    # Register the function arguments as variables
+    # Deepen the environment into a new scope
+    env.deepen()
+
+    # Register all the function arguments to the new scope
     for p in parameters:
-        bodyEnv.register_variable(p[1], p[0])
-    # Use it to generate the body's code
-    bodyc = self.body.to_code(bodyEnv)
+        env.register_variable(p[1], p[0])
+    # Generate the body's code in the new scope
+    bodyc = blockstmt_to_code(self.body, env)
+
+    # Leave the new scope.
+    env.undeepen()
 
 
     # Before entering the body we must make space
-    code.add(instructions.Ent(bodyc.maxStackSpace, bodyc.maxVarSpace + paramSpace))
+    maxVarSpace = env.symbols.max_var_space()
+    code.add(instructions.Ent(bodyc.maxStackSpace, maxVarSpace))
     code.add(bodyc)
 
     # Add the implicit return in case of a void function
@@ -93,29 +126,28 @@ def funcdef_to_code(self, env : Environment) -> CodeNode:
 
 FunctionDefinition.to_code = funcdef_to_code
 
-def comp_to_code(self, env : Environment) -> CodeNode:
+def blockstmt_to_code(compStmt : CompoundStatement, env : Environment) -> CodeNode:
+    # Special case of CompoundStatement.to_code needed by FunctionDefinition
+    # Does not first deepen / undeepen at the end, so that FuncDef can insert the arguments first
     code = CodeNode()
 
     declCount = 0
-    for stmt in self.statements:
+    for stmt in compStmt.statements:
         c = stmt.to_code(env)
         code.add(c)
-
         # max stack space is the max space any statement uses.
         code.maxStackSpace = max(code.maxStackSpace, c.maxStackSpace)
 
-        # Special case regarding maxVarSpace for compound statements.
-        if isinstance(stmt, CompoundStatement):
-            code.maxVarSpace = max(code.maxVarSpace, declCount + c.maxVarSpace)
-        else:
-            declCount += c.maxVarSpace
+    return code
 
-    code.maxVarSpace = max(code.maxVarSpace, declCount)
-    print('maxVarSpace =', code.maxVarSpace)
+def compstmt_to_code(self, env : Environment) -> CodeNode:
+    env.deepen()
+    code = blockstmt_to_code(self, env)
+    env.undeepen()
 
     return code
 
-CompoundStatement.to_code = comp_to_code
+CompoundStatement.to_code = compstmt_to_code
 
 def exprstmt_to_code(self, env : Environment) -> CodeNode:
     code = CodeNode()
