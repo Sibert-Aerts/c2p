@@ -370,7 +370,7 @@ class IdentifierExpression(ASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         code = CodeNode()
 
-        var = env.get_var(self.identifier.name)
+        var = env.get_variable(self.identifier.name)
 
         code.add(instructions.Ldo(var.ptype, var.address))
         code.type = var.ctype
@@ -382,7 +382,7 @@ class IdentifierExpression(ASTNode):
     def to_lcode(self, env: Environment) -> CodeNode:
         code = CodeNode()
 
-        var = env.get_var(self.identifier.name)
+        var = env.get_variable(self.identifier.name)
 
         code.add(instructions.Lda(0, var.address))
 
@@ -645,7 +645,7 @@ class FunctionDefinition(ASTNode):
 
 
         # Before entering the body we must make space
-        maxVarSpace = env.symbols.max_var_space()
+        maxVarSpace = env.scope.max_var_space()
         code.add(instructions.Ent(bodyc.maxStackSpace, maxVarSpace))
         code.add(bodyc)
 
@@ -680,7 +680,7 @@ class Program(ASTNode):
             code.foundMain = code.foundMain or c.foundMain
 
         # the amount of space global variables take up is just the amount of space all vars in level 0 take up
-        varSpace = env.symbols.varSpace
+        varSpace = env.scope.varSpace
 
         # TODO: Find an instruction that makes space for (uninitialised) variables.
         for i in range(5 + varSpace):

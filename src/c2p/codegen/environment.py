@@ -45,7 +45,7 @@ class Scope:
         varSpace = 0
         scope = self
         while scope.depth != 0:
-            varSpace += node.varSpace
+            varSpace += scope.varSpace
             scope = scope.parent
         return varSpace
 
@@ -83,7 +83,7 @@ class Scope:
         return variable
 
     def _get_function(self, name: str) -> FunctionRecord:
-        function = self.scope.find(name)
+        function = self.find(name)
         if not function:
             raise ValueError('Use of undefined function "{}"'.format(name))
         if isinstance(function, VariableRecord):
@@ -100,7 +100,7 @@ class Scope:
         isGlobal = (self.depth == 0)
         # Address works differently for global/local variables
         # TODO: or does it really?
-        address = self.alloc(ptype.size())
+        address = self._alloc(ptype.size())
         if not isGlobal:
             address += 5
 

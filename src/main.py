@@ -7,7 +7,7 @@ from c2p.grammar.antlr.SmallCLexer import SmallCLexer
 from c2p.grammar.antlr.SmallCParser import SmallCParser
 from c2p.grammar.ast.visitor import ASTVisitor
 from c2p.grammar.ast.visualize import Visualizer
-from c2p.codegen.codegen import *
+from c2p.codegen.environment import Environment
 
 def run(argv):
     if len(argv) < 2:
