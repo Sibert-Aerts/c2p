@@ -665,17 +665,17 @@ class Program(ASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         code = CodeNode()
 
-        declCode = CodeNode()
-        methCode = CodeNode()
+        declarationCode = CodeNode()
+        functionCode = CodeNode()
 
         for child in self.declarations:
             c = child.to_code(env)
 
             if isinstance(child, Declaration):
                 # TODO: global variable space / binding?
-                declCode.add(c)
+                declarationCode.add(c)
             else:
-                methCode.add(c)
+                functionCode.add(c)
 
             code.foundMain = code.foundMain or c.foundMain
 
@@ -687,14 +687,14 @@ class Program(ASTNode):
             code.add(instructions.Ldc(PAddress, 0))
 
         # First: initialise global variables
-        code.add(declCode)
+        code.add(declarationCode)
         # Second: jump to the main function
         # TODO: replace by a function call to main?
         code.add(instructions.Ujp('f_main'))
-        # Finally: Big block of method code.
-        code.add(methCode)
+        # Finally: Big block of function code.
+        code.add(functionCode)
 
         if not code.foundMain:
-            raise ValueError('No \'main\' method found.')
+            raise ValueError('No \'main\' function found.')
 
         return code

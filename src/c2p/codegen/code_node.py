@@ -4,7 +4,7 @@ class CodeNode:
         self.code = []
         # Data useful to higher-up nodes
         self.type = None            # By and for Expressions
-        self.maxStackSpace = 0      # By expressions, for methods
+        self.maxStackSpace = 0      # By expressions, for functions
         self.foundMain = False      # By function defs, for Program
 
     def add(self, other) -> None:
