@@ -1,6 +1,6 @@
 from c2p.ptypes import *
 from c2p.grammar.ctypes import *
-from typing import Any, Dict, List, NamedTuple, Optional, Union
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Union
 from c2p.instructions.branch import Label
 import copy
 
@@ -19,12 +19,11 @@ MethodRecord = NamedTuple('MethodRecord', [
     ('label', Label),
 ])
 
-class SymbolNode:
+class Scope:
     '''A tree class used to store a program's scopes and their symbols.'''
-    def __init__(self, parent: Optional['SymbolNode']) -> None:
-        # Parent has to be a SymbolNode
+    def __init__(self, parent: Optional['Scope']) -> None:
         self.parent = parent
-        self.children = [] # type: List[SymbolNode]
+        self.children = [] # type: List[Scope]
         self.symbols = {} # type: Dict[str, Union[VariableRecord, MethodRecord]]
         # varSpace is the amount of space the variables defined in this scope take up
         # varSpace is NOT an address
@@ -36,7 +35,6 @@ class SymbolNode:
             self.depth = parent.depth + 1
             self.parent.children.append(self)
 
-
     def frame_var_space(self) -> int:
         '''
         Get the total space of all variables reachable by this scope (upwards recursive),
@@ -44,10 +42,10 @@ class SymbolNode:
         Used to help determine the address for variables defined in a Statement inside a method.
         '''
         varSpace = 0
-        node = self
-        while(node.depth != 0):
+        scope = self
+        while scope.depth != 0:
             varSpace += node.varSpace
-            node = node.parent
+            scope = scope.parent
         return varSpace
 
     def max_var_space(self) -> int:
@@ -56,10 +54,7 @@ class SymbolNode:
         Used to determine the minimum amount of space that needs to be set aside on the stack before the
         stack can be used for evaluating expressions.
         '''
-        childMaxVarSpace = 0
-        for c in self.children:
-            childMaxVarSpace = max(childMaxVarSpace, c.max_var_space())
-        # No children: Own var space is the maximum.
+        childMaxVarSpace = max((c.max_var_space() for c in self.children), default=0)
         return childMaxVarSpace + self.varSpace
 
     def check_repeat(self, name:str) -> bool:
@@ -74,22 +69,22 @@ class SymbolNode:
         '''Search upwards through the tree to find the first symbol by the given name.
 
         Returns None if the symbol is not found.'''
-        node = self
-        while node is not None:
-            if name in node.symbols:
-                return node.symbols[name]
-            node = node.parent
+        scope = self
+        while scope:
+            if name in scope.symbols:
+                return scope.symbols[name]
+            scope = scope.parent
         return None
 
 class Environment:
     '''An object holding a dictionary of all declared variables reachable from a certain scope.'''
 
     def __init__(self):
-        self.symbols = SymbolNode(None)
+        self.symbols = Scope(None)
 
     def deepen(self):
         '''Deepens the symbol scope.'''
-        newScope = SymbolNode(self.symbols)
+        newScope = Scope(self.symbols)
         self.symbols = newScope
 
     def undeepen(self):
