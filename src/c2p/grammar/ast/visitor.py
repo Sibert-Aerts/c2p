@@ -2,6 +2,7 @@ from ..antlr.SmallCVisitor import SmallCVisitor  # type: ignore
 from ..antlr.SmallCParser import SmallCParser  # type: ignore
 from .node import *
 from ..ctypes import *
+from ...util import Impossible
 from ast import literal_eval
 
 
@@ -40,13 +41,6 @@ class ASTError(Exception):
     semantic error that prevents us from parsing a proper AST. Compilation should fail.
     '''
     pass
-
-class Impossible(Exception):
-    '''
-    This exception should never be caught, and thrown only in "impossible" code paths
-    that should never get run into.
-    '''
-
 
 # ASTError = the user wrote syntactically valid code containing some semantic.
 class ASTVisitor(SmallCVisitor):

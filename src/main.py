@@ -17,14 +17,14 @@ def run(argv):
     tree = parser.program()
 
     try:
-        AST = ASTVisitor().visit(tree)
+        ast = ASTVisitor().visit(tree)
 
         dotFileName = 'AST.dot'
         f = open(dotFileName, 'w')
-        f.write(Visualiser.make_dot(AST))
+        f.write(Visualiser.make_dot(ast))
         print('AST generation successful. Output written to \'{}\''.format(dotFileName))
 
-        code = make_code(AST)
+        code = ast.to_code(Environment()).code
         print('CODE:')
         codeText = ''
         for l in code:
@@ -39,12 +39,12 @@ def run(argv):
         p = open(codeFileName, 'w')
         p.write(codeText)
         print('Code generation successful. Output written to \'{}\''.format(codeFileName))
-        
+
     except:
         # Don't print a gigantic stack trace each time.
         exceptiondata = traceback.format_exc().splitlines()
         print('Encountered {0}:'.format(exceptiondata[-1]))
         [print(l) for l in exceptiondata[-3:-1]]
-        
+
 if __name__ == '__main__':
     run(sys.argv)
