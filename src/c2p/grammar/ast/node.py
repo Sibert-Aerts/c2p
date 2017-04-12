@@ -1,7 +1,9 @@
-from typing import Any, List, Optional, Union
-from ..ctypes import CType, CConst
+from typing import Any, List, Optional, Union, Tuple
+from ..ctypes import CArray, CConst, CInt, CPointer, CType, CVoid
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
+from ...ptypes import PAddress
+from ... import instructions
 # from ..ptypes import PType, PAddress, PBoolean, PCharacter, PInteger, PReal
 
 ### AST nodes
@@ -276,7 +278,7 @@ class Dereference(ASTNode):
         code.add(c)
 
         # make sure the inner code is of type pointer
-        if isinstance(t, CPointer):
+        if isinstance(c.type, CPointer):
             print('we dereferencin a pointer ova here!')
             # the type of this expression is the type that's being pointed at
             code.type = c.type.t
@@ -394,7 +396,7 @@ class IdentifierExpression(ASTNode):
 Declarator = Any  # of the following:
 
 class DeclaratorASTNode(ASTNode):  # abstract
-    def to_var(self, declarationType: CType) -> (CType, str):
+    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         '''
         CType (and name) synthesis from declarator 'types' and a given base type:
         int *x, y[]   →   (CPointer(CInt), "x") and (CArray(CInt), "y")
@@ -408,7 +410,7 @@ class IdentifierDeclarator(DeclaratorASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError('TODO')
 
-    def to_var(self, declarationType: CType) -> (CType, str):
+    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         return (declarationType, self.identifier.name)
 
 
@@ -419,7 +421,7 @@ class PointerDeclarator(DeclaratorASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError('TODO')
 
-    def to_var(self, declarationType: CType) -> (CType, str):
+    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         innerType, name = self.inner.to_var(declarationType)
         return (CPointer(innerType), name)
 
@@ -432,7 +434,7 @@ class ConstantDeclarator(DeclaratorASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError('TODO')
 
-    def to_var(self, declarationType: CType) -> (CType, str):
+    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         innerType, name = self.inner.to_var(declarationType)
         return (CConst(innerType), name)
 
@@ -445,7 +447,7 @@ class ArrayDeclarator(DeclaratorASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError('TODO')
 
-    def to_var(self, declarationType: CType) -> (CType, str):
+    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         innerType, name = self.inner.to_var(declarationType)
         return (CArray(innerType), name)
 
@@ -595,7 +597,7 @@ class ParameterDeclaration(ASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError('TODO')
 
-    def to_var(self) -> (CType, str):
+    def to_var(self) -> Tuple[CType, str]:
         return self.declarator.to_var(self.type)
 
 
@@ -613,7 +615,7 @@ class FunctionDefinition(ASTNode):
         code.foundMain = (name == 'main')
 
         returnType = self.returnType
-        # `parameters` is a list of tuples (CType, str)
+        # `parameters` is a list of tuples Tuple[CType, str]
         parameters = [p.to_var() for p in self.parameters]
         # `signature` is a list of CTypes
         signature = [p[0] for p in parameters]

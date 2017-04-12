@@ -1,6 +1,6 @@
 from c2p.ptypes import *
 from c2p.grammar.ctypes import *
-from typing import Any, List, NamedTuple, Optional, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Union
 from c2p.instructions.branch import Label
 import copy
 
@@ -21,11 +21,11 @@ MethodRecord = NamedTuple('MethodRecord', [
 
 class SymbolNode:
     '''A tree class used to store a program's scopes and their symbols.'''
-    def __init__(self, parent : Any):
+    def __init__(self, parent: Optional['SymbolNode']) -> None:
         # Parent has to be a SymbolNode
         self.parent = parent
-        self.children = []
-        self.symbols = {}
+        self.children = [] # type: List[SymbolNode]
+        self.symbols = {} # type: Dict[str, Union[VariableRecord, MethodRecord]]
         # varSpace is the amount of space the variables defined in this scope take up
         # varSpace is NOT an address
         self.varSpace = 0

@@ -6,7 +6,7 @@ from antlr4 import * # type: ignore
 from c2p.grammar.antlr.SmallCLexer import SmallCLexer
 from c2p.grammar.antlr.SmallCParser import SmallCParser
 from c2p.grammar.ast.visitor import ASTVisitor
-from c2p.grammar.ast.visualize import Visualiser
+from c2p.grammar.ast.visualize import Visualizer
 from c2p.codegen.codegen import *
 
 def run(argv):
@@ -21,7 +21,7 @@ def run(argv):
 
         dotFileName = 'AST.dot'
         f = open(dotFileName, 'w')
-        f.write(Visualiser.make_dot(ast))
+        f.write(Visualizer().make_dot(ast))
         print('AST generation successful. Output written to \'{}\''.format(dotFileName))
 
         code = ast.to_code(Environment()).code

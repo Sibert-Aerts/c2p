@@ -1,3 +1,4 @@
+from typing import Set
 from .base import PInstruction
 
 
@@ -33,19 +34,13 @@ class Ixj(PInstruction):
 
 class Label(PInstruction):
     """A P-machine label. (This isn't really an instruction.)"""
-    labels = []
-    count = {}
+    labels = set() # type: Set[str]
 
     def __init__(self, label: str) -> None:
-        if label not in self.labels:
-            self.labels.append(label)
-            self.count[label] = 0
-            self.label = label
-        else:
-            while(label + str(self.count[label]) in self.labels):
-                self.count[label] += 1
-            self.labels.append(label + str(self.count[label]))
-            self.label = newLabel
+        while label in self.labels:
+            label += '_'
+        self.labels.add(label)
+        self.label = label
 
     def emit(self) -> str:
         return '%s:' % self.label
