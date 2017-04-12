@@ -8,7 +8,7 @@ from .visitor import *
 from antlr4 import * # type: ignore
 from c2p.grammar.antlr.SmallCLexer import SmallCLexer
 from c2p.grammar.antlr.SmallCParser import SmallCParser
-from c2p.grammar.ast.visitor import ASTVisitor
+from c2p.grammar.ast.visitor import ASTError, ASTVisitor
 
 filepath = os.path.dirname(__file__) + "/test/"
 
@@ -21,16 +21,16 @@ class TestVisitorSuccess(unittest.TestCase):
         try:
             self.parse(filepath + filename)
             ASTVisitor().visit(self.tree)
-        except:
-            self.fail('Failed to visit \'{0}\'!'.format(filename))
+        except ASTError:
+            self.fail("Failed to visit '{0}'!".format(filename))
 
     def _test_failure(self, filename):
         try:
             self.parse(filepath + filename)
             ASTVisitor().visit(self.tree)
-        except:
+        except ASTError:
             return
-        self.fail('Succeeded at visiting incorrect file \'{0}\'!'.format(filename))
+        self.fail("Succeeded at visiting incorrect file '{0}'!".format(filename))
 
     def test_etc(self):
         self._test_acceptance('visitable/etc.c')

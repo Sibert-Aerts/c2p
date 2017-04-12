@@ -35,11 +35,11 @@ class SymbolNode:
         else: # Calculate depth, append self to the parent
             self.depth = parent.depth + 1
             self.parent.children.append(self)
-       
+
 
     def frame_var_space(self) -> int:
         '''
-        Get the total space of all variables reachable by this scope (upwards recursive), 
+        Get the total space of all variables reachable by this scope (upwards recursive),
         that are stored in the current frame (so no globals).
         Used to help determine the address for variables defined in a Statement inside a method.
         '''
@@ -64,25 +64,22 @@ class SymbolNode:
 
     def check_repeat(self, name:str) -> bool:
         '''Returns whether or not a symbol of that name is already defined in the *current* scope.'''
-        try:
-            self.symbols[name]
-            return True
-        except:
-            return False
+        return name in self.symbols
 
     def register(self, name:str, record : Union[VariableRecord, MethodRecord]) -> None:
         '''Register a new record to the current scope.'''
         self.symbols[name] = record
 
     def find(self, name:str) -> Union[VariableRecord, MethodRecord]:
-        '''Search upwards through the tree to find the first symbol by the given name.'''
+        '''Search upwards through the tree to find the first symbol by the given name.
+
+        Returns None if the symbol is not found.'''
         node = self
-        while(node is not None):
-            try:
+        while node is not None:
+            if name in node.symbols:
                 return node.symbols[name]
-            except:
-                node = node.parent
-        raise KeyError()
+            node = node.parent
+        return None
 
 class Environment:
     '''An object holding a dictionary of all declared variables reachable from a certain scope.'''
@@ -94,7 +91,7 @@ class Environment:
         '''Deepens the symbol scope.'''
         newScope = SymbolNode(self.symbols)
         self.symbols = newScope
-        
+
     def undeepen(self):
         '''Undeepens the symbol scope: All symbols defined in this level drop out of scope.'''
         self.symbols = self.symbols.parent
@@ -104,14 +101,14 @@ class Environment:
         addr = self.symbols.frame_var_space()
         self.symbols.varSpace += size
         return addr
-    
+
     def register_variable(self, name : str, ctype : CType) -> None:
         '''Registers a variable to the current scope'''
-        
+
         # Check if the symbol is already defined in the current scope
         if(self.symbols.check_repeat(name)):
             raise ValueError('Repeated declaration of symbol "{}"'.format(name))
-        
+
         # Make a new variable record and register it to the current scope.
         ptype = ctype.ptype()
         isGlobal = (self.symbols.depth == 0)
@@ -122,25 +119,22 @@ class Environment:
             address += 5
 
         print('registered var {} at depth {} at address {}'.format(name, self.symbols.depth, address))
-        
+
         self.symbols.register(name, VariableRecord(ctype, ptype, address, self.symbols.depth, isGlobal))
 
     def get_var(self, name : str) -> VariableRecord:
         '''Get the record of the specified variable, if it exists.'''
 
-        try:
-            var = self.symbols.find(name)
-            if isinstance(var, MethodRecord):
-                raise ValueError('Attempted to use symbol "{}" as a variable when it is a function.'.format(name))
-            return var
-        except KeyError:
+        var = self.symbols.find(name)
+        if not var:
             raise ValueError('Use of undefined variable "{}"'.format(name))
-        except ValueError as e:
-            raise e
-    
+        if isinstance(var, MethodRecord):
+            raise ValueError('Attempted to use symbol "{}" as a variable when it is a function.'.format(name))
+        return var
+
     def register_function(self, name : str, returnType : CType, signature : List[CType]) -> Label:
         '''Registers a function to the global scope and get its label.'''
-        
+
         # Check if the symbol is already defined in the current scope
         if(self.symbols.check_repeat(name)):
             raise ValueError('Repeated declaration of symbol "{}"'.format(name))
@@ -153,12 +147,9 @@ class Environment:
     def get_func(self, name : str) -> MethodRecord:
         '''Get the record of the specified function, if it exists.'''
 
-        try:
-            func = self.symbols.find(name)
-            if isinstance(func, VariableRecord):
-                raise ValueError('Attempted to use symbol {} as a function when it is a variable.'.format(name))
-            return func
-        except KeyError:
-            raise ValueError('Use of undefined function {}'.format(name))
-        except ValueError as e:
-            raise e
+        func = self.symbols.find(name)
+        if not func:
+            raise ValueError('Use of undefined function "{}"'.format(name))
+        if isinstance(func, VariableRecord):
+            raise ValueError('Attempted to use symbol "{}" as a function when it is a variable.'.format(name))
+        return func

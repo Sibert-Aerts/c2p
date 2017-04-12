@@ -6,9 +6,9 @@ from c2p.grammar import *
 from c2p import instructions
 from c2p.grammar.ast.node_methods import *
 
-def make_code(AST):
+def make_code(ast):
     env = Environment()
-    code = AST.to_code(env)
+    code = ast.to_code(env)
     return code.code
 
 def program_to_code(self, env : Environment) -> CodeNode:
@@ -25,7 +25,7 @@ def program_to_code(self, env : Environment) -> CodeNode:
             declCode.add(c)
         else:
             methCode.add(c)
-        
+
         code.foundMain = code.foundMain or c.foundMain
 
     # the amount of space global variables take up is just the amount of space all vars in level 0 take up
@@ -56,7 +56,7 @@ def declaration_to_code(self, env : Environment) -> CodeNode:
     for decl in self.initDeclarators:
         declType, name = decl.declarator.to_ctype(self.type)
         env.register_variable(name, declType)
-        
+
         if decl.init != None:
             # An initialiser is just an assignment, except it can also assign to const variables...
             # TODO: Initialisation of const variables
@@ -92,7 +92,7 @@ def funcdef_to_code(self, env : Environment) -> CodeNode:
         paramSpace += t.ptype().size()
 
     label = env.register_function(name, returnType, signature)
-    
+
     # Append the label pointing to this function
     code.add(label)
 
