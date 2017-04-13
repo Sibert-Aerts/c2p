@@ -3,6 +3,8 @@ import sys
 import c2p
 import os
 import traceback
+import cProfile
+from pstats import Stats
 
 from .visitor import *
 from antlr4 import * # type: ignore
@@ -56,5 +58,13 @@ class TestVisitorSuccess(unittest.TestCase):
     def test_qualifiers(self):
         self._test_failure('unvisitable/qualifiers.c')
 
+    def setUp(self):
+        self.profile = cProfile.Profile()
+        self.profile.enable()
+
     def tearDown(self):
+        p = Stats (self.profile)
+        p.strip_dirs()
+        p.sort_stats('cumtime')
+        p.print_stats()
         self.tree = None

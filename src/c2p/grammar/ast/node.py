@@ -1,7 +1,8 @@
 from typing import Any, List, Optional, Union, Tuple
-from ..ctypes import CArray, CConst, CInt, CPointer, CType, CVoid
+from ..ctypes import CArray, CConst, CChar, CInt, CPointer, CType, CVoid
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
+from ...codegen import printf
 from ...ptypes import PAddress
 from ... import instructions
 # from ..ptypes import PType, PAddress, PBoolean, PCharacter, PInteger, PReal
@@ -343,6 +344,9 @@ class Call(ASTNode):
         self.arguments = arguments
 
     def to_code(self, env: Environment) -> CodeNode:
+        if isinstance(self.name, IdentifierExpression) and self.name.identifier.name == 'printf':
+            return printf.to_code(self.arguments, env)
+
         raise NotImplementedError('TODO')
 
 class Constant(ASTNode):
@@ -355,6 +359,10 @@ class Constant(ASTNode):
 
         code.type = self.type
         val = self.value
+
+        # Ask the environment to turn string literals into addresses.
+        if code.type == CConst(CArray(CConst(CChar))):
+            val = env.add_string_literal(val)
 
         # TODO: Do we need to convert val to something here?
         code.add(instructions.Ldc(code.type.ptype(), val))
@@ -537,7 +545,15 @@ class ReturnStatement(ASTNode):
         self.expression = expression
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        if self.expression:
+            code = CodeNode()
+            code.add(self.expression.to_code(env))
+            code.add(instructions.Retf())
+            return code
+        else:
+            code = CodeNode()
+            code.add(instructions.Retp())
+            return code
 
 class ExprStatement(ASTNode):
     def __init__(self, expression: Optional[Expression]) -> None:
@@ -556,7 +572,8 @@ class ExprStatement(ASTNode):
         # there is no instruction that simply does SP := SP - 1...
         # ...so just write the top of the stack to 0?
         # TODO: figure out what better to do with the useless top-of-stack in an ExprStmt
-        code.add(instructions.Sro(PAddress, 0))
+        if code.type and code.type != CVoid:
+            code.add(instructions.Sro(PAddress, 0))
 
         code.maxStackSpace = c.maxStackSpace
 
@@ -646,7 +663,8 @@ class FunctionDefinition(ASTNode):
 
         # Before entering the body we must make space
         maxVarSpace = env.scope.max_var_space()
-        code.add(instructions.Ent(bodyc.maxStackSpace, maxVarSpace))
+        # TODO why does Ent break things???
+        # code.add(instructions.Ent(bodyc.maxStackSpace, maxVarSpace))
         code.add(bodyc)
 
         # Add the implicit return in case of a void function
@@ -687,10 +705,13 @@ class Program(ASTNode):
             code.add(instructions.Ldc(PAddress, 0))
 
         # First: initialise global variables
+        code.add(env.string_literal_code())
         code.add(declarationCode)
-        # Second: jump to the main function
-        # TODO: replace by a function call to main?
-        code.add(instructions.Ujp('f_main'))
+        # Second: call the main function
+        code.add(instructions.Mst(0))
+        code.add(instructions.Cup(0, 'f_main'))
+        code.add(instructions.Hlt())
+
         # Finally: Big block of function code.
         code.add(functionCode)
 

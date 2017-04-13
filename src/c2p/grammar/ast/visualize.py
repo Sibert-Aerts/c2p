@@ -12,14 +12,14 @@ class Visualizer:
         return self.id
 
     # Convert an AST into a full DOT file
-    def make_dot(self, ast):
+    def make_dot(self, ast: ASTNode):
         formatStr = \
             'digraph tree{{\nrankdir=TD\n{0}}}'
         rootId, dotList = self.ast_to_dot(ast)
         return formatStr.format(dotList)
 
     # Convert an AST node and its children into a series of DOT statements
-    def ast_to_dot(self, item):
+    def ast_to_dot(self, item: ASTNode):
         myId = self.getId()
 
         stmts = '{0}[label={1}]'.format(myId, item.__class__.__name__) + '\n'
@@ -28,8 +28,7 @@ class Visualizer:
             childId, childStmts = item
             return '{0} -> {1}[label={2}]\n{3}'.format(myId, childId, field, childStmts)
 
-        for field in item._fields:
-            c = getattr(item, field)
+        for field, c in item.__dict__.items():
 
             if isinstance(c, str):
                 stmts += makeStmts(self.str_to_dot(c), field)

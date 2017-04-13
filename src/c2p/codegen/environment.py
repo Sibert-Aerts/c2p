@@ -1,9 +1,9 @@
+from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Union
 from c2p.ptypes import *
 from c2p.grammar.ctypes import *
-from typing import Any, Dict, Iterable, List, NamedTuple, Optional, Union
+from c2p import instructions
 from c2p.instructions.branch import Label
-import copy
-
+from c2p.codegen.code_node import CodeNode
 
 VariableRecord = NamedTuple('VariableRecord', [
     ('ctype', CType),
@@ -120,19 +120,45 @@ class Scope:
         return label
 
 class Environment:
-    '''Manages a Scope.'''
+    '''Manages a Scope, and global string literals.'''
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.scope = Scope(None)
+        self.heap_pointer = 0
+        self.string_literals = []
 
-    def deepen(self):
+    def deepen(self) -> None:
         '''Deepens the symbol scope.'''
         newScope = Scope(self.scope)
         self.scope = newScope
 
-    def undeepen(self):
+    def undeepen(self) -> None:
         '''Undeepens the symbol scope: All symbols defined in this level drop out of scope.'''
         self.scope = self.scope.parent
+
+    def add_string_literal(self, string: str) -> int:
+        string += '\0'
+        self.string_literals.append(string)
+        self.heap_pointer -= len(string)
+        return self.heap_pointer
+
+    def string_literal_code(self) -> CodeNode:
+        '''Emit code that allocates string literals on the heap.'''
+        total_size = -self.heap_pointer
+        code = CodeNode()
+        if total_size == 0:
+            return code
+
+        code.add(instructions.Ldc(PAddress, 0))
+        code.add(instructions.Ldc(PInteger, total_size))
+        code.add(instructions.New())
+        ptr = self.heap_pointer
+        for string in self.string_literals[::-1]:
+            for character in string:
+                code.add(instructions.Ldc(PCharacter, ord(character)))
+                code.add(instructions.Sro(PCharacter, ptr))
+                ptr += 1
+        return code
 
     def alloc(self, size: int) -> int:
         '''Allocates a spot of size `size` to the current scope, returning its address.'''

@@ -26,13 +26,7 @@ def run(argv):
 
         code = ast.to_code(Environment()).code
         print('CODE:')
-        codeText = ''
-        for l in code:
-            try:
-                codeText += l.emit()
-            except:
-                codeText += l
-            codeText += '\n'
+        codeText = '\n'.join(op.emit() for op in code) + '\n'
         print(codeText)
 
         codeFileName = 'code.p'
