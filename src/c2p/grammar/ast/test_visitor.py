@@ -66,5 +66,5 @@ class TestVisitorSuccess(unittest.TestCase):
         p = Stats (self.profile)
         p.strip_dirs()
         p.sort_stats('cumtime')
-        p.print_stats()
+        # p.print_stats()
         self.tree = None
