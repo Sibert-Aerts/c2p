@@ -3,16 +3,24 @@
 int x = 10;
 
 int c(int r){
-    int dick;
+    int d;
     x = r;
 }
 
 int main(){
-    int y = 20;
-    int z = y;
     float c;
-    int q;
+    int y;
+    y = 20;
+    c = 3.14;
+    
+    int z = y;
+    int q = z + 10;
+    float flub = 10.0 - 1.5;
+    z = q + q + z;
     {
-        int q;
+        int q = z;
+    }
+    {
+        float c = 13.37;
     }
 }

@@ -99,10 +99,11 @@ class Scope:
         ptype = ctype.ptype()
         isGlobal = (self.depth == 0)
         # Address works differently for global/local variables
-        # TODO: or does it really?
         address = self._alloc(ptype.size())
         if not isGlobal:
             address += 5
+        else:
+            address += 9
 
         print('registered var {} at depth {} at address {}'.format(name, self.depth, address))
         self.symbols[name] = VariableRecord(ctype, ptype, address, self.depth, isGlobal)

@@ -39,7 +39,7 @@ class Cup(PInstruction):
     p is the storage requirement for the called procedure's parameters
     label is the procedure's label
 
-    MP := SP – (p + 4)      # Make a new stack frame?
+    MP := SP – (p + 4)      # Declare the new stack frame
     STORE[MP + 4] := PC     # Save return address
     PC := label             # Jump to procedure start
     '''

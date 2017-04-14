@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Union, Tuple
+from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CPointer, CType, CVoid
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
@@ -74,7 +74,7 @@ class Assignment(ASTNode):
         cr = self.right.to_code(env)
         code.add(cr)
 
-
+        # TODO: type compatibility & implicit casting logic!
         if(cl.type != cr.type.ignoreConst()):
             raise ValueError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
 
@@ -190,37 +190,47 @@ class GreaterThanEquals(ASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError('TODO')
 
-class Add(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
+class ArithmeticNode(ASTNode):
+    def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
         self.left = left
         self.right = right
+        self.operation = operation
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
 
-class Subtract(ASTNode):
+        # Load the left hand side as an L-Value, right hand side as an R-Value
+        cl = self.left.to_code(env)
+        code.add(cl)
+        cr = self.right.to_code(env)
+        code.add(cr)
+
+        # TODO: type compatibility & implicit casting logic!
+        if(cl.type.ignoreConst() != cr.type.ignoreConst()):
+            raise ValueError('Invalid operation {} between values of type of {} to {}.'.format(self.operation.__name__, cr.type, cl.type))
+
+        code.add(self.operation(cl.type.ptype()))
+
+        code.type = cl.type
+        code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 1)
+
+        return code
+
+class Add(ArithmeticNode):
     def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
+        ArithmeticNode.__init__(self, left, right, instructions.Add)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class Multiply(ASTNode):
+class Subtract(ArithmeticNode):
     def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
+        ArithmeticNode.__init__(self, left, right, instructions.Sub)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class Divide(ASTNode):
+class Multiply(ArithmeticNode):
     def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
+        ArithmeticNode.__init__(self, left, right, instructions.Mul)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+class Divide(ArithmeticNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        ArithmeticNode.__init__(self, left, right, instructions.Div)
 
 class Cast(ASTNode):
     def __init__(self, type: CType, right: Expression) -> None:
@@ -380,7 +390,7 @@ class IdentifierExpression(ASTNode):
 
         var = env.get_variable(self.identifier.name)
 
-        code.add(instructions.Ldo(var.ptype, var.address))
+        code.add(instructions.Lod(var.ptype, 0, var.address))
         code.type = var.ctype
 
         code.maxStackSpace = 1
@@ -656,15 +666,16 @@ class FunctionDefinition(ASTNode):
             env.register_variable(p[1], p[0])
         # Generate the body's code in the new scope
         bodyc = blockstmt_to_code(self.body, env)
-
+        # Get the amount of space the variables take up (needs to happen before undeepening)
+        maxVarSpace = env.scope.max_var_space()
         # Leave the new scope.
         env.undeepen()
 
 
-        # Before entering the body we must make space
-        maxVarSpace = env.scope.max_var_space()
-        # TODO why does Ent break things???
-        # code.add(instructions.Ent(bodyc.maxStackSpace, maxVarSpace))
+        print(name, 'maxVarSpace', maxVarSpace)
+        # maxVarSpace + 5 because we need to keep the frame header in mind
+        # maxStackSpace + 5 to be safe, or something
+        code.add(instructions.Ent(bodyc.maxStackSpace + 5, maxVarSpace + 5))
         code.add(bodyc)
 
         # Add the implicit return in case of a void function
@@ -699,10 +710,9 @@ class Program(ASTNode):
 
         # the amount of space global variables take up is just the amount of space all vars in level 0 take up
         varSpace = env.scope.varSpace
-
-        # TODO: Find an instruction that makes space for (uninitialised) variables.
-        for i in range(5 + varSpace):
-            code.add(instructions.Ldc(PAddress, 0))
+        # make space for the global variables + frame header (5) + files! (4)
+        # varspace + 20 to be safe...?
+        code.add(instructions.Ent(varSpace + 20, varSpace + 5 + 4))
 
         # First: initialise global variables
         code.add(env.string_literal_code())
