@@ -371,11 +371,13 @@ class Constant(ASTNode):
         val = self.value
 
         # Ask the environment to turn string literals into addresses.
-        if code.type == CConst(CArray(CConst(CChar))):
+        if code.type == CConst(CArray(CConst(CChar()))):
             val = env.add_string_literal(val)
 
-        # TODO: Do we need to convert val to something here?
-        code.add(instructions.Ldc(code.type.ptype(), val))
+        if self.type == CConst(CChar()):
+            code.add(instructions.Ldc(code.type.ptype(), "'{}'".format(val)))
+        else:    
+            code.add(instructions.Ldc(code.type.ptype(), val))
 
         code.maxStackSpace = 1
 
