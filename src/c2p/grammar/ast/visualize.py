@@ -43,8 +43,8 @@ class Visualizer:
                 # just append the elements in a list to the same parent node
                 for q in c:
                     stmts += makeStmts(self.ast_to_dot(q), field)
-
-            else:
+                    
+            elif isinstance(c, ASTNode):
                 stmts += makeStmts(self.ast_to_dot(c), field)
 
         return myId, stmts
