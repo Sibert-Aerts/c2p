@@ -1,5 +1,5 @@
 from typing import Any, List, Optional, Union, Tuple, Callable
-from ..ctypes import CArray, CConst, CChar, CInt, CPointer, CType, CVoid
+from ..ctypes import CArray, CConst, CChar, CInt, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
 from ...codegen import printf
@@ -126,71 +126,9 @@ class TernaryIf(ASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError('TODO')
 
-class LogicalOr(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class LogicalAnd(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class Equals(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class NotEquals(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class LessThan(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class GreaterThan(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class LessThanEquals(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class GreaterThanEquals(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class ArithmeticNode(ASTNode):
+class BinaryBooleanOperationNode(ASTNode):
+    '''A Node representing a binary expression between two binary expressions.'''
     def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
         self.left = left
         self.right = right
@@ -200,6 +138,93 @@ class ArithmeticNode(ASTNode):
         code = CodeNode()
 
         # Load the left hand side as an L-Value, right hand side as an R-Value
+        cl = self.left.to_code(env)
+        code.add(cl)
+        cr = self.right.to_code(env)
+        code.add(cr)
+
+        # TODO: boolean conversions.
+        for c in (cl, cr):
+            if(c.type.ignoreConst() != CBool()):
+                raise ValueError('Attempted to use variable of type {} as a boolean.'.format(cl.type))
+
+        code.add(self.operation())
+
+        code.type = CBool()
+        code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 1)
+
+        return code
+
+class LogicalOr(BinaryBooleanOperationNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        BinaryBooleanOperationNode.__init__(self, left, right, instructions.Or)
+
+class LogicalAnd(BinaryBooleanOperationNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        BinaryBooleanOperationNode.__init__(self, left, right, instructions.And)
+
+
+class ComparisonNode(ASTNode):
+    '''A Node representing a boolean comparison between two expressions of any type.'''
+    def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
+        self.left = left
+        self.right = right
+        self.operation = operation
+
+    def to_code(self, env: Environment) -> CodeNode:
+        code = CodeNode()
+
+        cl = self.left.to_code(env)
+        code.add(cl)
+        cr = self.right.to_code(env)
+        code.add(cr)
+
+        # TODO: type compatibility & implicit casting logic!
+        if(cl.type.ignoreConst() != cr.type.ignoreConst()):
+            raise ValueError('Invalid comparison {} between values of type of {} and {}.'.format(self.operation.__name__, cr.type, cl.type))
+
+        code.add(self.operation(cl.type.ptype()))
+
+        code.type = CBool()
+        code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 1)
+
+        return code
+
+class Equals(ComparisonNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, left, right, instructions.Equ)
+
+class NotEquals(ComparisonNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, left, right, instructions.Neq)
+
+class LessThan(ComparisonNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, left, right, instructions.Les)
+
+class GreaterThan(ComparisonNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, left, right, instructions.Grt)
+
+class LessThanEquals(ComparisonNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, left, right, instructions.Leq)
+
+class GreaterThanEquals(ComparisonNode):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, left, right, instructions.Geq)
+
+        
+class BinaryNumericOperationNode(ASTNode):
+    '''A Node representing a numeric expression between two numeric expressions.'''
+    def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
+        self.left = left
+        self.right = right
+        self.operation = operation
+
+    def to_code(self, env: Environment) -> CodeNode:
+        code = CodeNode()
+
         cl = self.left.to_code(env)
         code.add(cl)
         cr = self.right.to_code(env)
@@ -216,21 +241,22 @@ class ArithmeticNode(ASTNode):
 
         return code
 
-class Add(ArithmeticNode):
+class Add(BinaryNumericOperationNode):
     def __init__(self, left: Expression, right: Expression) -> None:
-        ArithmeticNode.__init__(self, left, right, instructions.Add)
+        BinaryNumericOperationNode.__init__(self, left, right, instructions.Add)
 
-class Subtract(ArithmeticNode):
+class Subtract(BinaryNumericOperationNode):
     def __init__(self, left: Expression, right: Expression) -> None:
-        ArithmeticNode.__init__(self, left, right, instructions.Sub)
+        BinaryNumericOperationNode.__init__(self, left, right, instructions.Sub)
 
-class Multiply(ArithmeticNode):
+class Multiply(BinaryNumericOperationNode):
     def __init__(self, left: Expression, right: Expression) -> None:
-        ArithmeticNode.__init__(self, left, right, instructions.Mul)
+        BinaryNumericOperationNode.__init__(self, left, right, instructions.Mul)
 
-class Divide(ArithmeticNode):
+class Divide(BinaryNumericOperationNode):
     def __init__(self, left: Expression, right: Expression) -> None:
-        ArithmeticNode.__init__(self, left, right, instructions.Div)
+        BinaryNumericOperationNode.__init__(self, left, right, instructions.Div)
+
 
 class Cast(ASTNode):
     def __init__(self, type: CType, right: Expression) -> None:
@@ -273,7 +299,14 @@ class AddressOf(ASTNode):
         self.inner = inner
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        # Getting the L-Value of something is the same as getting its address.
+        c = self.inner.to_lcode()
+        code.add(c)
+        code.maxStackSpace = c.maxStackSpace
+
+        return code
 
 class Dereference(ASTNode):
     def __init__(self, inner: Expression) -> None:
@@ -301,19 +334,37 @@ class Dereference(ASTNode):
 
         return code
 
-class LogicalNot(ASTNode):
-    def __init__(self, inner: Expression) -> None:
+
+class UnaryOperationNode(ASTNode):
+    '''A Node representing an operation on an expression.'''
+    def __init__(self, inner: Expression, reqType : Any, operation : Any) -> None:
         self.inner = inner
+        self.reqType = reqType
+        self.operation = operation
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
 
-class Negate(ASTNode):
+        c = self.left.to_code(env)
+        code.add(c)
+
+        if not isinstance(c.type.ignoreConst()), reqType):
+            raise ValueError('Cannot perform operation {} on expression of type {}.'.format(self.__class__.__name__, c.type))
+
+        code.add(self.operation(c.type.ptype()))
+
+        code.type = c.type
+        code.maxStackSpace = c.maxStackSpace
+
+        return code
+
+class LogicalNot(UnaryOperationNode):
     def __init__(self, inner: Expression) -> None:
-        self.inner = inner
+        UnaryOperationNode.__init__(self, inner, CBool, instructions.Not)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+class Negate(UnaryOperationNode):
+    def __init__(self, inner: Expression) -> None:
+        UnaryOperationNode.__init__(self, inner, (CInt, CFloat), instructions.Neg)
 
 class Index(ASTNode):
     def __init__(self, array: Expression, index: Expression) -> None:
@@ -329,6 +380,7 @@ class Index(ASTNode):
         # The array
         c = self.array.to_code(env)
         code.add(c)
+
         # TODO: Something about whether or not a const array or array of consts can be an L-Value?
         if isinstance(c.type, (CPointer, CArray)):
             print('we indexin an array ova here!!!!!')
@@ -343,8 +395,6 @@ class Index(ASTNode):
             raise NotImplementedError()
         else:
             raise ValueError('Cannot use type {} as array index.'.format(ic.type))
-
-        # TODO: finish this
 
         return code
 

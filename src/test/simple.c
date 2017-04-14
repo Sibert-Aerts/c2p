@@ -14,9 +14,12 @@ int main(){
     c = 3.14;
     
     int z = y;
+    char ch = 'w';
     int q = z + 10;
     float flub = 10.0 - 1.5;
-    z = q + q + z;
+    int r = q * z * -2;
+    int l = r / 120;
+    float smart = 10.0 / 3.0;
     {
         int q = z;
     }

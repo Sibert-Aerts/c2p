@@ -37,6 +37,11 @@ class CChar(CType):
         return PCharacter
 
 
+class CBool(CType):
+    def ptype(self) -> PType:
+        return PBoolean
+
+
 class CInt(CType):
     def ptype(self) -> PType:
         return PInteger

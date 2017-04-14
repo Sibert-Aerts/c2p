@@ -175,7 +175,7 @@ class Environment:
 
     def register_variable(self, name: str, ctype: CType) -> None:
         '''Registers a variable to the current scope.'''
-        return self.scope._register_variable(name, ctype)
+        self.scope._register_variable(name, ctype)
 
     def register_function(self, name: str, returnType: CType, signature: List[CType]) -> Label:
         '''Registers a function to the (global) scope and get its label.'''
