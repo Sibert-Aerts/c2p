@@ -76,7 +76,7 @@ class OperationAssignment(ASTNode):
             code.add(self.operation(lType))
 
         # Store the value from the right expression into the addres from the left expression
-        code.add(instructions.Sto(lType))            
+        code.add(instructions.Sto(lType))
 
         # Finally, load the value from the left expression back onto the stack for further use in expressions
         code.add(instructions.Ind(lType))
@@ -113,11 +113,46 @@ class TernaryIf(ASTNode):
         self.right = right
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        cc = self.condition.to_code(env)
+        cl = self.left.to_code(env)
+        cr = self.right.to_code(env)
+
+        # TODO: type equivalence
+        if cl.type.ignoreConst() != cr.type.ignoreConst():
+            raise ValueError('Incompatible ternary expression of both types {} and {}'.format(cl.type, cr.type))
+
+        code.type = cl.type.ignoreConst()
+
+        if cc.type.ignoreConst() != CBool():
+            # TODO: boolean conversion
+            raise ValueError('Invalid boolean expression of type {}'.format(cc.type))
+
+        # Make labels (the Label class ensures the labels are unique)
+        falseLabel = instructions.Label('ternfalse')
+        endLabel = instructions.Label('ternend')
+
+        # Verify condition
+        code.add(cc)
+        code.add(instructions.Fjp(falseLabel.label))
+        # If true: evaluate left expression
+        code.add(cl)
+        code.add(instructions.Ujp(endLabel.label))
+        # If false: evaluate right expression
+        code.add(falseLabel)
+        code.add(cr)
+        # End up at the end in either case
+        code.add(endLabel)
+
+        # None of the expressions are ever simultaneously loaded onto the stack
+        code.maxStackSpace = max(cc.maxStackSpace, cl.maxStackSpace, cr.maxStackSpace)
+
+        return code
 
 
 class BinaryBooleanOperationNode(ASTNode):
-    '''A Node representing a binary expression between two binary expressions.'''
+    '''A Node representing a binary operation between two boolean expressions.'''
     def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
         self.left = left
         self.right = right
@@ -255,33 +290,98 @@ class Cast(ASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError('TODO')
 
-class PrefixIncrement(ASTNode):
-    def __init__(self, inner: Expression) -> None:
+class PrefixNode(ASTNode):
+    '''Node representing a prefix increment/decrement.'''
+    def __init__(self, inner: Expression, operation : Any) -> None:
         self.inner = inner
+        self.operation = operation
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
 
-class PostfixIncrement(ASTNode):
+        c = self.inner.to_lcode(env)
+        t = c.type.ptype()
+
+        # Put the expression's address on the stack thrice
+        code.add(c)
+        code.add(instructions.Dpl(PAddress))
+        code.add(instructions.Dpl(PAddress))
+
+        # Put the expression's actual value on the stack
+        code.add(instructions.Ind(t))
+        # crement it
+        code.add(self.operation(t, 1))
+        # Store it
+        code.add(instructions.Sto(t))
+
+        # Indirect: Load the newly cremented value on the stack
+        code.add(instructions.Ind(t))
+
+        code.type = c.type
+        code.maxStackSpace = max(c.maxStackSpace, 3)
+
+        return code
+
+class PrefixIncrement(PrefixNode):
     def __init__(self, inner: Expression) -> None:
+        PrefixNode.__init__(self, inner, instructions.Inc)
+
+class PrefixDecrement(PrefixNode):
+    def __init__(self, inner: Expression) -> None:
+        PrefixNode.__init__(self, inner, instructions.Dec)
+
+
+class PostfixNode(ASTNode):
+    '''Node representing a postfix increment/decrement.'''
+    def __init__(self, inner: Expression, operation : Any) -> None:
         self.inner = inner
+        self.operation = operation
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
 
-class PrefixDecrement(ASTNode):
+        c = self.inner.to_lcode(env)
+        t = c.type.ptype()
+
+        # Put the expression's address on the stack thrice
+        code.add(c)
+        code.add(instructions.Dpl(PAddress))
+        code.add(instructions.Dpl(PAddress))
+
+        # Put the expression's actual value on the stack
+        code.add(instructions.Ind(t))
+        # crement it
+        code.add(self.operation(t, 1))
+        # Store it
+        code.add(instructions.Sto(t))
+
+        # Indirect: Load the newly cremented value on the stack
+        code.add(instructions.Ind(t))
+
+        # How do you nicely set the old value as the top of stack without being able to load/assign
+        # relative to the top-of-stack? The stack-based instructions are supposed to make it easier...
+        # (and don't think about just adding the expression's l-code twice,
+        # because that'll cause its code to execute twice!)
+
+        # TODO: HACK: uncrement it again
+        if self.operation == instructions.Inc:
+            code.add(instructions.Dec(t, 1))
+        else:
+            code.add(instructions.Inc(t, 1))
+
+        code.type = c.type
+        code.maxStackSpace = max(c.maxStackSpace, 3)
+
+        return code
+
+class PostfixIncrement(PostfixNode):
     def __init__(self, inner: Expression) -> None:
-        self.inner = inner
+        PostfixNode.__init__(self, inner, instructions.Inc)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class PostfixDecrement(ASTNode):
+class PostfixDecrement(PostfixNode):
     def __init__(self, inner: Expression) -> None:
-        self.inner = inner
+        PostfixNode.__init__(self, inner, instructions.Dec)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
 
 class AddressOf(ASTNode):
     def __init__(self, inner: Expression) -> None:
@@ -291,8 +391,11 @@ class AddressOf(ASTNode):
         code = CodeNode()
 
         # Getting the L-Value of something is the same as getting its address.
-        c = self.inner.to_lcode()
+        c = self.inner.to_lcode(env)
         code.add(c)
+
+        # The expression is now of type pointer to (inner type)
+        code.type = CPointer(c.type)
         code.maxStackSpace = c.maxStackSpace
 
         return code
@@ -302,7 +405,23 @@ class Dereference(ASTNode):
         self.inner = inner
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        c = self.inner.to_code(env)
+
+        # Ensure it's a pointer
+        if isinstance(c.type.ignoreConst(), CPointer):
+            # the type of this expression is the type that's being pointed at (CPointer.t)
+            code.type = c.type.t
+        else:
+            raise ValueError('Expression of type {} cannot be dereferenced.'.format(c.type))
+
+        code.add(c)
+        code.add(instructions.Ind(c.type.t.ptype()))
+
+        code.maxStackSpace = c.maxStackSpace
+
+        return  code
 
     def to_lcode(self, env: Environment) -> CodeNode:
         code = CodeNode()
@@ -310,10 +429,9 @@ class Dereference(ASTNode):
         c = self.inner.to_code(env)
         code.add(c)
 
-        # make sure the inner code is of type pointer
-        if isinstance(c.type, CPointer):
-            print('we dereferencin a pointer ova here!')
-            # the type of this expression is the type that's being pointed at
+        # Ensure it's a const-free pointer
+        if isinstance(c.type, CPointer) and c.type == c.type.ignoreConst():
+            # the type of this expression is the type that's being pointed at (CPointer.t)
             code.type = c.type.t
         else:
             raise ValueError('Expression of type {} cannot be dereferenced into an L-Value.'.format(c.type))
