@@ -81,30 +81,6 @@ class ReturnStatement(ASTNode):
             code.add(instructions.Retp())
             return code
 
-class ExprStatement(ASTNode):
-    def __init__(self, expression: Optional[Expression]) -> None:
-        self.expression = expression
-
-    def to_code(self, env: Environment) -> CodeNode:
-        code = CodeNode()
-
-        if self.expression is None:
-            return code
-
-        c = self.expression.to_code(env)
-        code.add(c)
-
-        # discard the top of stack...
-        # there is no instruction that simply does SP := SP - 1...
-        # ...so just write the top of the stack to 0?
-        # TODO: figure out what better to do with the useless top-of-stack in an ExprStmt
-        if c.type != CVoid():
-            code.add(instructions.Sro(c.type.ptype(), 0))
-
-        code.maxStackSpace = c.maxStackSpace
-
-        return code
-
 def blockstmt_to_code(compStmt: 'CompoundStatement', env: Environment) -> CodeNode:
     # Special case of CompoundStatement.to_code needed by FunctionDefinition
     # Does not first deepen / undeepen at the end, so that FuncDef can insert the arguments first

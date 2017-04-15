@@ -42,19 +42,27 @@ class Comma(ASTNode):
 
         return code
 
-class Assignment(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
+
+class OperationAssignment(ASTNode):
+    def __init__(self, left: Expression, right: Expression, operation : Optional[Any]) -> None:
         self.left = left
         self.right = right
+        self.operation = operation
 
     def to_code(self, env: Environment) -> CodeNode:
         code = CodeNode()
 
         # Load the left hand side as an L-Value, right hand side as an R-Value, and write R to L
         cl = self.left.to_lcode(env)
+        lType = cl.type.ptype()
         code.add(cl)
         # Duplicate the value produced by the left expression
         code.add(instructions.Dpl(PAddress))
+
+        if self.operation:
+            # Get the current value of the l-side object (if we need it)
+            code.add(instructions.Dpl(PAddress))
+            code.add(instructions.Ind(lType))
 
         cr = self.right.to_code(env)
         code.add(cr)
@@ -63,47 +71,40 @@ class Assignment(ASTNode):
         if(cl.type != cr.type.ignoreConst()):
             raise ValueError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
 
+        # Apply the operation (if any)
+        if self.operation:
+            code.add(self.operation(lType))
+
         # Store the value from the right expression into the addres from the left expression
-        code.add(instructions.Sto(cl.type.ptype()))
-        # Finally, load the value from the left expression back onto the stack for further use in expressions.
-        code.add(instructions.Ind(cl.type.ptype()))
+        code.add(instructions.Sto(lType))            
+
+        # Finally, load the value from the left expression back onto the stack for further use in expressions
+        code.add(instructions.Ind(lType))
 
         code.type = cl.type
-        code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 1)
+        code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 2)
 
         return code
 
-class AddAssignment(ASTNode):
+class Assignment(OperationAssignment):
     def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
+        OperationAssignment.__init__(self, left, right, None)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class SubAssignment(ASTNode):
+class AddAssignment(OperationAssignment):
     def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
+        OperationAssignment.__init__(self, left, right, instructions.Add)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class MulAssignment(ASTNode):
+class SubAssignment(OperationAssignment):
     def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
+        OperationAssignment.__init__(self, left, right, instructions.Sub)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
-class DivAssignment(ASTNode):
+class MulAssignment(OperationAssignment):
     def __init__(self, left: Expression, right: Expression) -> None:
-        self.left = left
-        self.right = right
+        OperationAssignment.__init__(self, left, right, instructions.Mul)
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+class DivAssignment(OperationAssignment):
+    def __init__(self, left: Expression, right: Expression) -> None:
+        OperationAssignment.__init__(self, left, right, instructions.Div)
 
 class TernaryIf(ASTNode):
     def __init__(self, condition: Expression, left: Expression, right: Expression) -> None:

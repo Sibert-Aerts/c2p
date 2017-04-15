@@ -7,7 +7,6 @@ from ... import instructions
 
 from .node_base import *
 from .node_expression import *
-from .node_statement import *
 
 Declarator = Any  # of the following:
 
