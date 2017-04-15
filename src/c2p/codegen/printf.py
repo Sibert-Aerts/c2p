@@ -11,6 +11,7 @@ def to_code(arguments: List[Expression], env: Environment):
     fmt = arguments[0]
     assert fmt.__class__.__name__ == 'Constant'
     assert fmt.type == CConst(CArray(CConst(CChar())))
+    # TODO: what is this address and why is it wrong
     address = env.add_string_literal(fmt.value)
 
     loop_label = Label('printf_loop')
@@ -28,7 +29,7 @@ def to_code(arguments: List[Expression], env: Environment):
 
     # If it's zero, jump to done.
     code.add(Dpl(PCharacter))         # q, STORE[q], STORE[q]
-    code.add(Ldc(PCharacter, 0))      # q, STORE[q], STORE[q], 0
+    code.add(Ldc(PCharacter, "'0'"))  # q, STORE[q], STORE[q], 0
     code.add(Neq(PCharacter))         # q, STORE[q], STORE[q] != 0
     code.add(Fjp(done_label.label))   # q, STORE[q]
 
@@ -46,4 +47,6 @@ def to_code(arguments: List[Expression], env: Environment):
     code.add(Equ(PAddress))
     code.add(Fjp(done_label.label))
 
+    code.type = CVoid()
+    code.maxStackSpace = 5
     return code

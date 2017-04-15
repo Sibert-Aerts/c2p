@@ -1,6 +1,5 @@
 from ..ptypes import PType, PAddress, PBoolean, PCharacter, PInteger, PReal
 
-
 class CType:
     def __init__(self) -> None:
         self.class_ = self.__class__
@@ -20,6 +19,10 @@ class CType:
 
     def ptype(self) -> PType:
         raise NotImplementedError()
+
+    def size(self) -> int:
+        # Used for array indexing
+        return 1
 
     def __repr__(self):
         return self.__class__.__name__
@@ -68,6 +71,19 @@ class CPointer(CLayerType):
         return PAddress
 
 class CArray(CLayerType):
+    def __init__(self, t: CType, length=None) -> None:
+        super().__init__(t)
+        self.length = length    # Type: int
+
+    def __repr__(self):
+        return '{}[{}]({})'.format(self.__class__.__name__, self.length, self.t.__repr__())
+
+    def size(self) -> int:
+        if length:
+            return self.length * self.t.size()
+        else:
+            raise ValueError('Attempted to get length of array with non-specified length.')
+
     def ptype(self) -> PType:
         return PAddress
 

@@ -2,6 +2,7 @@ from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CFloat, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
+from ...codegen import printf
 from ...ptypes import *
 from ... import instructions
 
@@ -485,23 +486,25 @@ class Index(ASTNode):
         code = CodeNode()
 
         # The array
-        c = self.array.to_code(env)
-        code.add(c)
+        ca = self.array.to_code(env)
 
-        # TODO: Something about whether or not a const array or array of consts can be an L-Value?
-        if isinstance(c.type, (CPointer, CArray)):
-            print('we indexin an array ova here!!!!!')
-            code.type = c.type.t
+        # Ensure the array is indexable and is also const-free
+        if isinstance(ca.type, (CPointer, CArray)) and ca.type.ignoreConst() == ca.type:
+            code.type = ca.type.t
         else:
-            raise ValueError('Expression of type {} cannot be indexed into an L-Value.'.format(c.type))
+            raise ValueError('Expression of type {} cannot be indexed into an L-Value.'.format(ca.type))
 
         # The index
-        ic = self.index.to_code(env)
-        if ic.type.ignoreConst() == CInt():
-            # TODO: implement indexing instructions
-            raise NotImplementedError()
+        ci = self.index.to_code(env)
+        if ci.type.ignoreConst() == CInt():
+            # Load array and index onto stack
+            code.add(ca)
+            code.add(ci)
+            # Get the length of one item (perhaps another array) from the array we're indexing
+            length = self.array.t.size()
+            code.add(instructions.Ixa(length))
         else:
-            raise ValueError('Cannot use type {} as array index.'.format(ic.type))
+            raise ValueError('Cannot use expression of type {} as index.'.format(ci.type))
 
         return code
 
