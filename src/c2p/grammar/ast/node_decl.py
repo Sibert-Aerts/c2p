@@ -7,6 +7,7 @@ from ... import instructions
 
 from .node_base import *
 from .node_expression import *
+from .node_statement import *
 
 Declarator = Any  # of the following:
 
@@ -77,7 +78,7 @@ class Declaration(ASTNode):
             if decl.init != None:
                 # An initialiser is just an assignment, except it can also assign to const variables...
                 # TODO: Initialisation of const variables
-                init = Assignment(left=IdentifierExpression(Identifier(name)), right=decl.init)
+                init = ExprStatement(Assignment(left=IdentifierExpression(Identifier(name)), right=decl.init))
                 c = init.to_code(env)
                 code.add(c)
 

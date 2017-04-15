@@ -2,11 +2,6 @@
 
 int x = 10;
 
-int c(int r){
-    int d;
-    x = r;
-}
-
 int main(){
     int a = 10, b = 20, c;
     float x = 10.0, y = 20.0, z;
@@ -14,6 +9,7 @@ int main(){
     c = a + b - a * b / a * -a;
     // z = 230.0
     z = x + y - x * y / x * -x;
+    360;
     
     {
         int a = 12345;

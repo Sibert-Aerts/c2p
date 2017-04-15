@@ -29,7 +29,7 @@ class WhileStatement(ASTNode):
         raise NotImplementedError('TODO')
 
 class ForStatement(ASTNode):
-    def __init__(self, left: Optional[Union[Declaration, Expression]], center: Optional[Expression], right: Optional[Expression], body: Statement) -> None:
+    def __init__(self, left: Optional[Union['Declaration', Expression]], center: Optional[Expression], right: Optional[Expression], body: Statement) -> None:
         self.left = left
         self.center = center
         self.right = right
@@ -59,11 +59,25 @@ class ReturnStatement(ASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         if self.expression:
             code = CodeNode()
-            code.add(self.expression.to_code(env))
+            c = self.expression.to_code(env)
+            code.add(c)
+
+            # Make sure we're returning the right thing...
+            if c.type == CVoid():
+                raise ValueError('Cannot return expression of type CVoid.')
+
+            # TODO: type compatibility
+            if c.type.ignoreConst() != env.returnType.ignoreConst():
+                raise ValueError('Cannot return expression of type CVoid.')
+
+            # Put the return value where we can find it later
+            code.add(instructions.Str(c.type.ptype(), 0, 0))
+            # Return with value
             code.add(instructions.Retf())
             return code
         else:
             code = CodeNode()
+            # Return without value
             code.add(instructions.Retp())
             return code
 
@@ -84,8 +98,8 @@ class ExprStatement(ASTNode):
         # there is no instruction that simply does SP := SP - 1...
         # ...so just write the top of the stack to 0?
         # TODO: figure out what better to do with the useless top-of-stack in an ExprStmt
-        if code.type and code.type != CVoid:
-            code.add(instructions.Sro(PAddress, 0))
+        if c.type != CVoid():
+            code.add(instructions.Sro(c.type.ptype(), 0))
 
         code.maxStackSpace = c.maxStackSpace
 
@@ -106,7 +120,7 @@ def blockstmt_to_code(compStmt: 'CompoundStatement', env: Environment) -> CodeNo
     return code
 
 class CompoundStatement(ASTNode):
-    def __init__(self, statements: List[Union[Declaration, Statement]]) -> None:
+    def __init__(self, statements: List[Union['Declaration', Statement]]) -> None:
         self.statements = statements
 
     def to_code(self, env: Environment) -> CodeNode:

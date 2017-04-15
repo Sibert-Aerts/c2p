@@ -2,7 +2,7 @@ from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CFloat, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
-from ...ptypes import PAddress
+from ...ptypes import *
 from ... import instructions
 
 from .node_base import *
@@ -53,6 +53,9 @@ class Assignment(ASTNode):
         # Load the left hand side as an L-Value, right hand side as an R-Value, and write R to L
         cl = self.left.to_lcode(env)
         code.add(cl)
+        # Duplicate the value produced by the left expression
+        code.add(instructions.Dpl(PAddress))
+
         cr = self.right.to_code(env)
         code.add(cr)
 
@@ -60,7 +63,10 @@ class Assignment(ASTNode):
         if(cl.type != cr.type.ignoreConst()):
             raise ValueError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
 
+        # Store the value from the right expression into the addres from the left expression
         code.add(instructions.Sto(cl.type.ptype()))
+        # Finally, load the value from the left expression back onto the stack for further use in expressions.
+        code.add(instructions.Ind(cl.type.ptype()))
 
         code.type = cl.type
         code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 1)
@@ -388,8 +394,45 @@ class Call(ASTNode):
     def to_code(self, env: Environment) -> CodeNode:
         if isinstance(self.name, IdentifierExpression) and self.name.identifier.name == 'printf':
             return printf.to_code(self.arguments, env)
+        
+        code = CodeNode()
 
-        raise NotImplementedError('TODO')
+        # Mark the new frame
+        code.add(instructions.Mst(0))
+
+        # Identify the called function (if it exists)
+        if not isinstance(self.name, IdentifierExpression):
+            raise ValueError('Call to non-identifier.')
+
+        name = self.name.identifier.name
+        returnType, signature, label = env.get_function(name)
+
+        # Verify the number of arguments
+        if len(signature) != len (self.arguments):
+            raise ValueError('Invalid call to "{}": Expected {} arguments, got {}.' \
+                .format(name, len(signature), len(self.arguments)))
+
+        # Load the arguments onto the stack and verify their types
+        for sig, arg in zip(signature, self.arguments):    # sig:CType, arg:Expression
+            # Add the code to load the argument onto the stack
+            c = arg.to_code(env)
+            code.add(c)
+
+            # TODO: Type compatibility
+            if c.type.ignoreConst() != sig.ignoreConst():
+                raise ValueError('Invalid call to "{}": Expected expression of type {}, got {}.' \
+                    .format(name, arg, c.type))
+        
+        argSize = sum([s.ptype().size() for s in signature])
+
+        # Make the call
+        code.add(instructions.Cup(argSize, label))
+
+        # If the function returns, this should consume everything we put on the stack and
+        # put a single value of type returnType on the stack.
+        code.type = returnType
+
+        return code
 
 class Constant(ASTNode):
     def __init__(self, type: CConst, value: Any) -> None:

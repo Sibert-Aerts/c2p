@@ -58,7 +58,7 @@ class FunctionDefinition(ASTNode):
 
         # Deepen the environment into a new scope
         env.deepen()
-
+        env.returnType = returnType
         # Register all the function arguments to the new scope
         for p in parameters:
             env.register_variable(p[1], p[0])
@@ -68,6 +68,7 @@ class FunctionDefinition(ASTNode):
         maxVarSpace = env.scope.max_var_space()
         # Leave the new scope.
         env.undeepen()
+        env.returnType = None
 
 
         print(name, 'maxVarSpace', maxVarSpace)
@@ -77,7 +78,7 @@ class FunctionDefinition(ASTNode):
         code.add(bodyc)
 
         # Add the implicit return in case of a void function
-        if returnType == CVoid:
+        if returnType == CVoid():
             code.add(instructions.Retp())
 
         # Safety halt in case execution flow continues past the function boundary...?
@@ -103,8 +104,7 @@ class Program(ASTNode):
                 declarationCode.add(c)
             else:
                 functionCode.add(c)
-
-            code.foundMain = code.foundMain or c.foundMain
+                code.foundMain = code.foundMain or c.foundMain
 
         # the amount of space global variables take up is just the amount of space all vars in level 0 take up
         varSpace = env.scope.varSpace

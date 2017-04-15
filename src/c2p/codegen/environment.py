@@ -16,7 +16,7 @@ VariableRecord = NamedTuple('VariableRecord', [
 FunctionRecord = NamedTuple('FunctionRecord', [
     ('returnType', CType),
     ('signature', List[CType]),
-    ('label', Label),
+    ('label', str),
 ])
 
 class Scope:
@@ -117,7 +117,7 @@ class Scope:
 
         # Make a function record and register it
         label = Label('f_{}'.format(name))
-        self.symbols[name] = FunctionRecord(returnType, signature, label)
+        self.symbols[name] = FunctionRecord(returnType, signature, label.label)
         return label
 
 class Environment:
@@ -126,7 +126,8 @@ class Environment:
     def __init__(self) -> None:
         self.scope = Scope(None)
         self.heap_pointer = 0
-        self.string_literals = []
+        self.string_literals = []   # type: List[str]
+        self.returnType = None      # type: Optional[CType]
 
     def deepen(self) -> None:
         '''Deepens the symbol scope.'''

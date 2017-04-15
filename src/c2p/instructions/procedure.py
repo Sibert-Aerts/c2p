@@ -109,7 +109,7 @@ class Retf(PInstruction):
     '''
     Return from a function that produced a result.
     
-    SP := MP                    # Function result in local stack
+    SP := MP                    # Return stack to old state + 1 for the return value
     PC := STORE[MP + 4]         # Return branch
     EP := STORE[MP + 3]         # Restore EP
     if EP ≥ NP:
@@ -123,7 +123,7 @@ class Retp(PInstruction):
     '''
     Return from a procedure with no results.
 
-    SP := MP – 1
+    SP := MP – 1                # We didn't put anything in STORE[MP] so disregard it
     PC := STORE[MP + 4]         # Return branch
     EP := STORE[MP + 3]         # Restore EP
     if EP ≥ NP:
