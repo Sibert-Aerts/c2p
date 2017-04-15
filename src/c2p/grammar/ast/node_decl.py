@@ -22,9 +22,6 @@ class IdentifierDeclarator(DeclaratorASTNode):
     def __init__(self, identifier: Identifier) -> None:
         self.identifier = identifier
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
     def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         return (declarationType, self.identifier.name)
 
@@ -32,9 +29,6 @@ class IdentifierDeclarator(DeclaratorASTNode):
 class PointerDeclarator(DeclaratorASTNode):
     def __init__(self, inner: 'Declarator') -> None:
         self.inner = inner
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
 
     def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         innerType, name = self.inner.to_var(declarationType)
@@ -46,9 +40,6 @@ class ConstantDeclarator(DeclaratorASTNode):
     def __init__(self, inner: 'Declarator') -> None:
         self.inner = inner
 
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
-
     def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         innerType, name = self.inner.to_var(declarationType)
         return (CConst(innerType), name)
@@ -58,9 +49,6 @@ class ArrayDeclarator(DeclaratorASTNode):
     def __init__(self, inner: 'Declarator', size: Expression) -> None:
         self.inner = inner
         self.size = size
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
 
     def to_var(self, declarationType: CType) -> Tuple[CType, str]:
         innerType, name = self.inner.to_var(declarationType)
@@ -73,9 +61,6 @@ class InitDeclarator(ASTNode):
     def __init__(self, declarator: Declarator, init: Optional[Expression]) -> None:
         self.declarator = declarator
         self.init = init
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
 
 class Declaration(ASTNode):
     def __init__(self, type: CType, initDeclarators: List[InitDeclarator]) -> None:

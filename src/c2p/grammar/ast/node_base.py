@@ -12,6 +12,3 @@ class ASTNode:
 class Identifier(ASTNode):
     def __init__(self, name: str) -> None:
         self.name = name
-
-    def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
