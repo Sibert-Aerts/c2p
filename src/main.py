@@ -25,9 +25,9 @@ def run(argv):
         print('AST generation successful. Output written to \'{}\''.format(dotFileName))
 
         code = ast.to_code(Environment()).code
-        print('CODE:')
         codeText = '\n'.join(op.emit() for op in code) + '\n'
-        print(codeText)
+        # print('CODE:')
+        # print(codeText)
 
         codeFileName = 'code.p'
         p = open(codeFileName, 'w')
