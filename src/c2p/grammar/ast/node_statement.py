@@ -51,7 +51,29 @@ class WhileStatement(ASTNode):
         self.body = body
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        # The Label class ensures that these are unique
+        startLabel = instructions.Label('whileStart')
+        endLabel = instructions.Label('whileEnd')
+
+        # Define this scope as a loop, and tell the code where to jump to
+        # in case of a break (end) or continue (start)
+        env.set_as_loop(endLabel, startLabel)
+
+        ccond = self.condition.to_code(env)
+        cbody = self.body.to_code(env)
+
+        code.add(startLabel)
+        code.add(ccond)
+        code.add(instructions.Fjp(endLabel.label))
+        code.add(cbody)
+        code.add(instructions.Ujp(startLabel.label))
+        code.add(endLabel)
+
+        code.maxStackSpace = max(ccond.maxStackSpace, cbody.maxStackSpace)
+
+        return code
 
 class ForStatement(ASTNode):
     def __init__(self, left: Optional[Union['Declaration', Expression]], center: Optional[Expression], right: Optional[Expression], body: Statement) -> None:
@@ -61,21 +83,94 @@ class ForStatement(ASTNode):
         self.body = body
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        # The Label class ensures that these are unique
+        startLabel = instructions.Label('whileStart')
+        endLabel = instructions.Label('whileEnd')
+
+        # Define this scope as a loop, and tell the code where to jump to
+        # in case of a break (end) or continue (start)
+        env.set_as_loop(endLabel, startLabel)
+
+        # Manually deepen.
+        env.deepen()
+
+        # Compile the different parts of the statement, if they exist
+        cleft = None
+        if self.left:
+            if isinstance(self.left, Declaration):
+                cleft = self.left.to_code(env)
+            else: # cleft is an Expression
+                cleft = ExprStatement(self.left).to_code(env)
+            code.maxStackSpace = max(code.maxStackSpace, cleft.maxStackSpace)
+        
+        ccond = None
+        if self.center:
+            ccond = self.center.to_code(env)
+            code.maxStackSpace = max(code.maxStackSpace, ccond.maxStackSpace)
+
+        cright = None
+        if self.right:
+            cright = ExprStatement(self.right).to_code(env)
+            code.maxStackSpace = max(code.maxStackSpace, cright.maxStackSpace)
+
+        cbody = None
+        if isinstance(self.body, CompoundStatement):
+            cbody = blockstmt_to_code(self.body, env)
+        else:
+            cbody = self.body.to_code(env)
+        code.maxStackSpace = max(code.maxStackSpace, cbody.maxStackSpace)
+
+        if self.left:
+            code.add(cleft)
+        code.add(startLabel)
+        if self.center:
+            code.add(ccond)
+            code.add(instructions.Fjp(endLabel.label))
+        code.add(cbody)
+        if self.right:
+            code.add(cright)
+        code.add(instructions.Ujp(startLabel.label))
+        code.add(endLabel)
+
+        env.undeepen()
+
+        return code
 
 class BreakStatement(ASTNode):
     def __init__(self) -> None:
         pass
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        loopScope = env.find_loop()
+
+        # Check if we're inside a loop or not
+        if loopScope is None:
+            ValueError('Attempted to "break" outside a loop.')
+
+        code.add(instructions.Ujp(loopScope.breakLabel))
+
+        return code
 
 class ContinueStatement(ASTNode):
     def __init__(self) -> None:
         pass
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        loopScope = env.find_loop()
+
+        # Check if we're inside a loop or not
+        if loopScope is None:
+            ValueError('Attempted to "continue" outside a loop.')
+
+        code.add(instructions.Ujp(loopScope.continueLabel))
+
+        return code
 
 class ReturnStatement(ASTNode):
     def __init__(self, expression: Optional[Expression]) -> None:

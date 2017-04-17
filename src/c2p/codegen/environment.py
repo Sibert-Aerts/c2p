@@ -29,6 +29,7 @@ class Scope:
         # varSpace is the amount of space the variables defined in this scope take up
         # varSpace is NOT an address
         self.varSpace = 0
+        self.maxVarSpace = 0
 
         # These are only used in for/while loop scopes.
         self.isLoop = False
@@ -40,6 +41,11 @@ class Scope:
         else: # Calculate depth, append self to the parent
             self.depth = parent.depth + 1
             self.parent.children.append(self)
+
+        # Find the scope that has to store all your local variables in a frame
+        self.varScope = self
+        while self.varScope.depth > 1:
+            self.varScope = self.varScope.parent
 
     def frame_var_space(self) -> int:
         '''
@@ -54,15 +60,6 @@ class Scope:
             scope = scope.parent
         return varSpace
 
-    def max_var_space(self) -> int:
-        '''
-        Get the maximum amount of variable space this scope uses at a single time (downwards recusive).
-        Used to determine the minimum amount of space that needs to be set aside on the stack before the
-        stack can be used for evaluating expressions.
-        '''
-        childMaxVarSpace = max((c.max_var_space() for c in self.children), default=0)
-        return childMaxVarSpace + self.varSpace
-
     def find(self, name:str) -> Union[VariableRecord, FunctionRecord]:
         '''Search upwards through the tree to find the first symbol by the given name.
 
@@ -75,9 +72,10 @@ class Scope:
         return None
 
     def _alloc(self, size: int) -> int:
-        addr = self.frame_var_space()
+        offset = self.frame_var_space()
         self.varSpace += size
-        return addr
+        self.varScope.maxVarSpace = max(self.varScope.maxVarSpace, offset + 1)
+        return offset
 
     def _get_variable(self, name: str) -> VariableRecord:
         variable = self.find(name)
@@ -200,9 +198,9 @@ class Environment:
         '''Registers a function to the (global) scope and get its label.'''
         return self.scope._register_function(name, returnType, signature)
 
-    def set_as_loop(self, br : str, cont : str) -> None:
+    def set_as_loop(self, br : Label, cont : Label) -> None:
         '''Defines the current scope as a loop, and registers its 'break' and 'continue' labels.'''
-        self.scope._set_as_loop(br, cont)
+        self.scope._set_as_loop(br.label, cont.label)
 
     def find_loop(self) -> Optional[str]:
         '''Search upwards through the scope tree (including current scope) to find the first scope defined as a loop.

@@ -68,7 +68,7 @@ class FunctionDefinition(ASTNode):
         bodyc = blockstmt_to_code(self.body, env)
 
         # Get the amount of space the variables take up (needs to happen before leaving scope)
-        maxVarSpace = env.scope.max_var_space()
+        maxVarSpace = env.scope.maxVarSpace
 
         # Leave the new scope, remove the returnType
         env.undeepen()
