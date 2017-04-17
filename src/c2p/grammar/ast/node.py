@@ -56,17 +56,21 @@ class FunctionDefinition(ASTNode):
         code.add(label)
 
 
-        # Deepen the environment into a new scope
+        # Deepen the environment into a new scope, and tell the returnType
         env.deepen()
         env.returnType = returnType
+
         # Register all the function arguments to the new scope
         for p in parameters:
             env.register_variable(p[1], p[0])
+
         # Generate the body's code in the new scope
         bodyc = blockstmt_to_code(self.body, env)
-        # Get the amount of space the variables take up (needs to happen before undeepening)
+
+        # Get the amount of space the variables take up (needs to happen before leaving scope)
         maxVarSpace = env.scope.max_var_space()
-        # Leave the new scope.
+
+        # Leave the new scope, remove the returnType
         env.undeepen()
         env.returnType = None
 

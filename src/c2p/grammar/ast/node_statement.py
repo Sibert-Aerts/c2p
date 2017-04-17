@@ -18,7 +18,32 @@ class CondStatement(ASTNode):
         self.falseBody = falseBody
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        # The Label class ensures that these are unique
+        falseLabel = instructions.Label('ifFalse')
+        endLabel = instructions.Label('ifEnd')
+
+        ccond = self.condition.to_code(env)
+        code.add(ccond)
+        code.add(instructions.Fjp(falseLabel.label))
+
+        ctrue = self.trueBody.to_code(env)
+        code.add(ctrue)
+
+        if self.falseBody:
+            code.add(instructions.Ujp(endLabel.label))
+            code.add(falseLabel)
+            cf = self.falseBody.to_code(env)
+            code.maxStackSpace = cf.maxStackSpace
+            code.add(cf)
+            code.add(endLabel)
+        else:
+            code.add(falseLabel)
+
+        code.maxStackSpace = max(code.maxStackSpace, ccond.maxStackSpace, ctrue.maxStackSpace)
+
+        return code
 
 class WhileStatement(ASTNode):
     def __init__(self, condition: Expression, body: Statement) -> None:
