@@ -1,7 +1,7 @@
 from typing import Any
 
 from .base import PInstruction
-from ..ptypes import PType
+from ..ptypes import PType, PBoolean
 
 
 class Ldo(PInstruction):
@@ -20,7 +20,10 @@ class Ldc(PInstruction):
 
     def __init__(self, t: PType, q: Any) -> None:
         self.t = t
-        self.q = q
+        if t == PBoolean:
+            self.q = 't' if q else 'f'
+        else:
+            self.q = q
 
     def emit(self) -> str:
         return 'ldc %s %s' % (self.t.letter, self.q)

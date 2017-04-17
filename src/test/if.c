@@ -1,35 +1,43 @@
 #include <stdio.h>
 
+bool isPositive(int a){
+    if (a < 0)
+        return false;
+    return true;
+}
+
 char* compare(int a, int b){
 
     char text[];
     
     if(a<b)
     {
-        text = "a is kleiner dan b\n";
+        text = "a is smaller than b\n";
     }
     else if (a == b)
     {
-        text = "a en b zijn even groot\n";
+        text = "a and b are equal\n";
     } 
     else
     {
-        text = "a is groter dan b\n";
+        text = "a is larger than b\n";
     }
     
     return (char *)text;
 }
 
 int main(){
-    printf(compare(20, 30));    // out: a is kleiner dan b
-    printf(compare(30, 20));    // out: a is groter dan b
-    printf(compare(20, 20));    // out: a en b zijn even groot
-    
-    if(10 > 20)                 // (prints nothing)
-        printf("10 > 20");
+    printf(compare(20, 30));    // out: a is smaller than b
+    printf(compare(30, 20));    // out: a is larger than b
+    printf(compare(20, 20));    // out: a and b are equal
+            
+    // out: 10 is positive
+    if(isPositive(10))
+        printf("10 is positive\n"); 
         
-    if(10 < 20)                 // out: 10 < 20
-        printf("10 < 20");
+    // out: -10 is negative
+    if(!isPositive(-10))
+        printf("-10 is negative\n");
         
     return 0;
 }

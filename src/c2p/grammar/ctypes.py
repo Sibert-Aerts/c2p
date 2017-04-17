@@ -94,4 +94,4 @@ class CConst(CLayerType):
     def ignoreConst(self):
         return self.t.ignoreConst()
 
-fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar()}
+fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar(), 'bool' : CBool()}

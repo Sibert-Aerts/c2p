@@ -20,7 +20,7 @@ exprStatement: expression? ';';
 
 // Declarations and types
 declaration: declarationSpecifiers initDeclaratorList? ';';
-declarationSpecifiers: ('void' | 'char' | 'int' | 'float' | 'const')+;
+declarationSpecifiers: ('void' | 'char' | 'int' | 'float' | 'const' | 'bool' )+;
 initDeclaratorList: initDeclarator (',' initDeclarator)*;
 initDeclarator: declarator ('=' assignment)?;
 declarator: pointer directDeclarator;
@@ -41,7 +41,7 @@ cast: unary | '(' declarationSpecifiers pointer ')' cast;
 unary: postfix | ('++' | '--') unary | ('&' | '*' | '!' | '+' | '-') cast;
 postfix: primary | postfix ('[' expression ']' | '(' expressionList? ')' | ('++' | '--'));
 primary: constant | Identifier | '(' expression ')';
-constant: FloatingConstant | IntegerConstant | CharacterConstant | StringConstant;
+constant: FloatingConstant | IntegerConstant | CharacterConstant | StringConstant | BoolConstant;
 assignmentOperator: '=' | '*=' | '/=' | '+=' | '-=';
 expressionList: assignment (',' assignment)*;
 
@@ -55,10 +55,11 @@ BlockComment: '/*' .*? '*/' -> skip;
 fragment Letter: [a-zA-Z_];
 fragment Digit: [0-9];
 fragment Sign: [-+];
-fragment EscapeSequence: '\\' ['"\\?abfnrtv];
+fragment EscapeSequence: '\\' [\'"\\?abfnrtv];
 
 FloatingConstant: Digit* '.' Digit* ([eE] Sign? Digit+)?;
 IntegerConstant: Digit+;
-CharacterConstant: '\'' (~['\\\n] | EscapeSequence) '\'';
+CharacterConstant: '\'' (~[\'\\\n] | EscapeSequence) '\'';
 StringConstant: '"' (EscapeSequence | ~["\\\n] | '\\\n')* '"';
+BoolConstant: 'true' | 'false';
 Identifier: (Letter) (Letter | Digit)*;

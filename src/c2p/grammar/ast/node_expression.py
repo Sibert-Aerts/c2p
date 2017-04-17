@@ -433,7 +433,7 @@ class Dereference(ASTNode):
 
         code.maxStackSpace = c.maxStackSpace
 
-        return  code
+        return code
 
     def to_lcode(self, env: Environment) -> CodeNode:
         code = CodeNode()
@@ -454,12 +454,9 @@ class Dereference(ASTNode):
         return code
 
 
-class UnaryOperationNode(ASTNode):
-    '''A Node representing an operation on an expression.'''
-    def __init__(self, inner: Expression, reqType : Any, operation : Any) -> None:
+class LogicalNot(ASTNode):
+    def __init__(self, inner: Expression) -> None:
         self.inner = inner
-        self.reqType = reqType
-        self.operation = operation
 
     def to_code(self, env: Environment) -> CodeNode:
         code = CodeNode()
@@ -467,23 +464,35 @@ class UnaryOperationNode(ASTNode):
         c = self.inner.to_code(env)
         code.add(c)
 
-        if not isinstance(c.type.ignoreConst(), self.reqType):
-            raise ValueError('Cannot perform operation {} on expression of type {}.'.format(self.__class__.__name__, c.type))
+        if c.type.ignoreConst() != CBool():
+            raise ValueError('Logical not on expression of type {}, expected bool.'.format(c.type))
 
-        code.add(self.operation(c.type.ptype()))
+        code.add(instructions.Not())
 
         code.type = c.type
         code.maxStackSpace = c.maxStackSpace
 
         return code
 
-class LogicalNot(UnaryOperationNode):
+class Negate(ASTNode):
     def __init__(self, inner: Expression) -> None:
-        UnaryOperationNode.__init__(self, inner, CBool, instructions.Not)
+        self.inner = inner
 
-class Negate(UnaryOperationNode):
-    def __init__(self, inner: Expression) -> None:
-        UnaryOperationNode.__init__(self, inner, (CInt, CFloat), instructions.Neg)
+    def to_code(self, env: Environment) -> CodeNode:
+        code = CodeNode()
+
+        c = self.inner.to_code(env)
+        code.add(c)
+
+        if not isinstance(c.type.ignoreConst(), (CFloat, CInt)):
+            raise ValueError('Negation on expression of type {}, expected numeric.'.format(c.type))
+
+        code.add(instructions.Neg(c.type.ptype()))
+
+        code.type = c.type
+        code.maxStackSpace = c.maxStackSpace
+
+        return code
 
 class Index(ASTNode):
     def __init__(self, array: Expression, index: Expression) -> None:
@@ -612,9 +621,7 @@ class Constant(ASTNode):
 
         # Ask the environment to turn string literals into addresses.
         if code.type == CConst(CArray(CConst(CChar()))):
-            print('Putting "{}" on the heap!'.format(val))
             val = env.add_string_literal(val)
-            print('Heap address is {}'.format(val))
 
         if self.type == CConst(CChar()):
             code.add(instructions.Ldc(code.type.ptype(), "'{}'".format(val)))

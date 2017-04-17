@@ -607,6 +607,14 @@ class ASTVisitor(SmallCVisitor):
             return Constant(CConst(CChar()), literal_eval(_value))
         elif _type == SmallCParser.StringConstant:
             return Constant(CConst(CArray(CConst(CChar()))), literal_eval(_value))
+        elif _type == SmallCParser.BoolConstant:
+            if _value == "true":
+                _value = True
+            elif _value == "false":
+                _value = False
+            else: 
+                raise Impossible
+            return Constant(CConst(CBool()), _value)
         else:
             raise Impossible()
 
