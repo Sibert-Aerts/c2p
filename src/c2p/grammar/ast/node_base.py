@@ -32,7 +32,9 @@ class ExprStatement(ASTNode):
         code.add(c)
 
         if c.type is None:
-            raise NotImplementedError('Forgot to put the type in when compiling the {}!!!'.format(self.expression.__class__.__name__))
+            raise NotImplementedError('Forgot to put the type in when compiling {}!!!'.format(self.expression.__class__.__name__))
+        if c.maxStackSpace == 0:
+            raise NotImplementedError('Forgot to put the maxStackSpace in when compiling {}!!!'.format(self.expression.__class__.__name__))
 
         # discard the top of stack...
         # there is no instruction that simply does SP := SP - 1...

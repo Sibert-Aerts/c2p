@@ -79,7 +79,7 @@ class CArray(CLayerType):
         return '{}[{}]({})'.format(self.__class__.__name__, self.length, self.t.__repr__())
 
     def size(self) -> int:
-        if length:
+        if self.length:
             return self.length * self.t.size()
         else:
             raise ValueError('Attempted to get length of array with non-specified length.')

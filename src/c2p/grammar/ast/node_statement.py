@@ -62,20 +62,20 @@ class ReturnStatement(ASTNode):
             c = self.expression.to_code(env)
             code.add(c)
 
-            # Make sure we're returning the right thing...
-            if c.type == CVoid():
-                raise ValueError('Cannot return expression of type CVoid.')
-
             # TODO: type compatibility
+            # Ensure we're returning the right thing
             if c.type.ignoreConst() != env.returnType.ignoreConst():
-                raise ValueError('Cannot return expression of type CVoid.')
+                raise ValueError('Attempted to return expression of type {}, expected {}.'.format(c.type, env.returnType))
 
-            # Put the return value where we can find it later
+            # Put the return value where we can find it later: On top of the previous stack, where MP points to
             code.add(instructions.Str(c.type.ptype(), 0, 0))
             # Return with value
             code.add(instructions.Retf())
             return code
         else:
+            if env.returnType != CVoid():
+                raise ValueError('Cannot return an expression in a function that returns void.')
+
             code = CodeNode()
             # Return without value
             code.add(instructions.Retp())

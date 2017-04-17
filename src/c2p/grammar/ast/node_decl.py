@@ -62,6 +62,30 @@ class InitDeclarator(ASTNode):
         self.declarator = declarator
         self.init = init
 
+# I pulled this out of the Declaration.to_code function because it's easier that way
+# Essentially a simpler version of assignment.
+def init_to_code(env : Environment, name : str, decl : InitDeclarator) -> CodeNode:
+    code = CodeNode()
+
+    # Load the variable's address onto the stack
+    var = env.get_variable(name)
+    code.add(instructions.Lod(var.ptype, 0, var.address))
+
+    # Evaluate the right expression and put it on the stack
+    cinit = decl.init.to_code(env)
+    code.add(cinit)
+
+    # TODO: type compatibility & implicit casting logic!
+    if(var.ctype.ignoreConst() != cinit.type.ignoreConst()):
+        raise ValueError('Incompatible initialisation of {} as {}.'.format(var.ctype, cinit.type))
+
+    # Store the value
+    code.add(instructions.Sto(var.ptype))
+
+    code.maxStackSpace = cinit.maxStackSpace + 1
+
+    return code
+
 class Declaration(ASTNode):
     def __init__(self, type: CType, initDeclarators: List[InitDeclarator]) -> None:
         self.type = type
@@ -75,10 +99,7 @@ class Declaration(ASTNode):
             env.register_variable(name, declarationType)
 
             if decl.init != None:
-                # An initialiser is just an assignment, except it can also assign to const variables...
-                # TODO: Initialisation of const variables
-                init = ExprStatement(Assignment(left=IdentifierExpression(Identifier(name)), right=decl.init))
-                c = init.to_code(env)
+                c = init_to_code(env, name, decl)
                 code.add(c)
 
                 # max stack space depends entirely on the max. required by any of the init assignments

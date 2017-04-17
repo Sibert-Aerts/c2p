@@ -122,7 +122,7 @@ class TernaryIf(ASTNode):
 
         # TODO: type equivalence
         if cl.type.ignoreConst() != cr.type.ignoreConst():
-            raise ValueError('Incompatible ternary expression of both types {} and {}'.format(cl.type, cr.type))
+            raise ValueError('Invalid ternary expression of both types {} and {}'.format(cl.type, cr.type))
 
         code.type = cl.type.ignoreConst()
 
@@ -480,7 +480,35 @@ class Index(ASTNode):
         self.index = index
 
     def to_code(self, env: Environment) -> CodeNode:
-        raise NotImplementedError('TODO')
+        code = CodeNode()
+
+        # The array
+        ca = self.array.to_code(env)
+
+        # Ensure the array is indexable
+        if not isinstance(ca.type, (CPointer, CArray)):
+            raise ValueError('Expression of type {} cannot be indexed.'.format(ca.type))
+
+        # The type of the items in the array (may itself be an array)
+        itemType = ca.type.t
+
+        # The index
+        ci = self.index.to_code(env)
+        if ci.type.ignoreConst() != CInt():
+            raise ValueError('Cannot use expression of type {} as index.'.format(ci.type))
+
+        # Load array and index onto stack
+        code.add(ca)
+        code.add(ci)
+        # Find the offset from the base pointer
+        itemSize = itemType.size()
+        code.add(instructions.Ixa(itemSize))
+        code.add(instructions.Ind(itemType.ptype()))
+
+        code.type = itemType
+        code.maxStackSpace = max(ca.maxStackSpace, ci.maxStackSpace + 1)
+
+        return code
 
     def to_lcode(self, env: Environment) -> CodeNode:
         code = CodeNode()
@@ -489,22 +517,26 @@ class Index(ASTNode):
         ca = self.array.to_code(env)
 
         # Ensure the array is indexable and is also const-free
-        if isinstance(ca.type, (CPointer, CArray)) and ca.type.ignoreConst() == ca.type:
-            code.type = ca.type.t
-        else:
+        if not isinstance(ca.type, (CPointer, CArray)) or ca.type.ignoreConst() != ca.type:
             raise ValueError('Expression of type {} cannot be indexed into an L-Value.'.format(ca.type))
+        
+        # The type of the items in the array (may itself be an array)
+        itemType = ca.type.t
 
         # The index
         ci = self.index.to_code(env)
-        if ci.type.ignoreConst() == CInt():
-            # Load array and index onto stack
-            code.add(ca)
-            code.add(ci)
-            # Get the length of one item (perhaps another array) from the array we're indexing
-            length = self.array.t.size()
-            code.add(instructions.Ixa(length))
-        else:
+        if ci.type.ignoreConst() != CInt():
             raise ValueError('Cannot use expression of type {} as index.'.format(ci.type))
+
+        # Load array and index onto stack
+        code.add(ca)
+        code.add(ci)
+        # Find the offset from the base pointer
+        itemSize = itemType.size()
+        code.add(instructions.Ixa(itemSize))
+
+        code.type = itemType
+        code.maxStackSpace = max(ca.maxStackSpace, ci.maxStackSpace + 1)
 
         return code
 

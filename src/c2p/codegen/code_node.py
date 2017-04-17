@@ -7,7 +7,7 @@ class CodeNode:
         self.code = code or []
         # Data useful to higher-up nodes
         self.type = type            # By and for Expressions
-        self.maxStackSpace = 0      # By expressions, for functions
+        self.maxStackSpace = 0      # By expressions and declarations, for functions
         self.foundMain = False      # By function defs, for Program
 
     def add(self, other : Union['CodeNode', PInstruction]) -> None:

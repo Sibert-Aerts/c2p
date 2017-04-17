@@ -24,11 +24,16 @@ class Scope:
     itself have parent or child scopes.'''
     def __init__(self, parent: Optional['Scope']) -> None:
         self.parent = parent
-        self.children = [] # type: List[Scope]
-        self.symbols = {} # type: Dict[str, Union[VariableRecord, FunctionRecord]]
+        self.children = []  # type: List[Scope]
+        self.symbols = {}   # type: Dict[str, Union[VariableRecord, FunctionRecord]]
         # varSpace is the amount of space the variables defined in this scope take up
         # varSpace is NOT an address
         self.varSpace = 0
+
+        # These are only used in for/while loop scopes.
+        self.isLoop = False
+        self.breakLabel = None      # type: str
+        self.continueLabel = None   # type: str
 
         if parent is None:
             self.depth = 0
@@ -120,6 +125,22 @@ class Scope:
         self.symbols[name] = FunctionRecord(returnType, signature, label.label)
         return label
 
+    def set_as_loop(self, br : str, cont : str) -> None:
+        '''Defines the current scope as a loop, and registers its 'break' and 'continue' labels.'''
+        self.isLoop = True
+        self.breakLabel = br
+        self.continueLabel = cont
+
+    def find_loop(self) -> Optional[str]:
+        '''Search upwards through the tree (including self) to find the first scope defined as a loop.
+        Returns None if no such scope is found.'''
+        scope = self
+        while scope:
+            if scope.isLoop:
+                return scope
+            scope = scope.parent
+        return None
+
 class Environment:
     '''Manages a Scope, and global string literals.'''
 
@@ -151,6 +172,7 @@ class Environment:
         if total_size == 0:
             return code
 
+        # TODO: put the address somewhere where we can find it
         code.add(instructions.Ldc(PAddress, 0))
         code.add(instructions.Ldc(PInteger, total_size))
         code.add(instructions.New())
