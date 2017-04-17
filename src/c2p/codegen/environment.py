@@ -125,15 +125,12 @@ class Scope:
         self.symbols[name] = FunctionRecord(returnType, signature, label.label)
         return label
 
-    def set_as_loop(self, br : str, cont : str) -> None:
-        '''Defines the current scope as a loop, and registers its 'break' and 'continue' labels.'''
+    def _set_as_loop(self, br : str, cont : str) -> None:
         self.isLoop = True
         self.breakLabel = br
         self.continueLabel = cont
 
-    def find_loop(self) -> Optional[str]:
-        '''Search upwards through the tree (including self) to find the first scope defined as a loop.
-        Returns None if no such scope is found.'''
+    def _find_loop(self) -> Optional[str]:
         scope = self
         while scope:
             if scope.isLoop:
@@ -172,7 +169,6 @@ class Environment:
         if total_size == 0:
             return code
 
-        # TODO: put the address somewhere where we can find it
         code.add(instructions.Ldc(PAddress, 0))
         code.add(instructions.Ldc(PInteger, total_size))
         code.add(instructions.New())
@@ -203,3 +199,12 @@ class Environment:
     def register_function(self, name: str, returnType: CType, signature: List[CType]) -> Label:
         '''Registers a function to the (global) scope and get its label.'''
         return self.scope._register_function(name, returnType, signature)
+
+    def set_as_loop(self, br : str, cont : str) -> None:
+        '''Defines the current scope as a loop, and registers its 'break' and 'continue' labels.'''
+        self.scope._set_as_loop(br, cont)
+
+    def find_loop(self) -> Optional[str]:
+        '''Search upwards through the scope tree (including current scope) to find the first scope defined as a loop.
+        Returns None if no such scope is found.'''
+        return self.scope._find_loop()

@@ -601,11 +601,13 @@ class Constant(ASTNode):
 
         # Ask the environment to turn string literals into addresses.
         if code.type == CConst(CArray(CConst(CChar()))):
+            print('Putting "{}" on the heap!'.format(val))
             val = env.add_string_literal(val)
+            print('Heap address is {}'.format(val))
 
         if self.type == CConst(CChar()):
             code.add(instructions.Ldc(code.type.ptype(), "'{}'".format(val)))
-        else:    
+        else:
             code.add(instructions.Ldc(code.type.ptype(), val))
 
         code.maxStackSpace = 1

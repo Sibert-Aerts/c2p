@@ -69,7 +69,7 @@ def init_to_code(env : Environment, name : str, decl : InitDeclarator) -> CodeNo
 
     # Load the variable's address onto the stack
     var = env.get_variable(name)
-    code.add(instructions.Lod(var.ptype, 0, var.address))
+    code.add(instructions.Lda(0, var.address))
 
     # Evaluate the right expression and put it on the stack
     cinit = decl.init.to_code(env)

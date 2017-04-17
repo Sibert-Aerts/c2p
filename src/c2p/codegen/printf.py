@@ -6,12 +6,14 @@ from ..instructions import *
 
 Expression = Any
 def to_code(arguments: List[Expression], env: Environment):
-    print(arguments[0])
-    # HACK for circular dependency :(((
-    fmt = arguments[0]
-    assert fmt.__class__.__name__ == 'Constant'
-    assert fmt.type == CConst(CArray(CConst(CChar())))
-    address = env.add_string_literal(fmt.value)
+
+    string = arguments[0]
+
+    cs = string.to_code(env)
+    if cs.type.ignoreConst() != CArray(CChar()):
+        ValueError('Invalid call to "printf" with argument of type {}, expected {}.'.format(cs.type, CArray(CChar())))
+
+    # Load the string's address onto the stack
 
     loop_label = Label('printf_loop')
     done_label = Label('printf_done')
@@ -20,7 +22,7 @@ def to_code(arguments: List[Expression], env: Environment):
 
     ################################### Stack after this opcode: #
     ##############################################################
-    code.add(Ldc(PAddress, address))  # q
+    code.add(cs)
     code.add(loop_label)              # q
     # Get the character.
     code.add(Dpl(PAddress))           # q, q
