@@ -36,7 +36,9 @@ int main(){
         printf("10 is positive\n"); 
         
     // out: -10 is negative
-    if(!isPositive(-10))
+    if(isPositive(-10))
+        printf("-10 is positive\n");
+    else
         printf("-10 is negative\n");
         
     return 0;
