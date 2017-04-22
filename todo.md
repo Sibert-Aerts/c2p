@@ -4,7 +4,7 @@
 
 2. **Import (mandatory)**  
 The import of stdio should be supported (`#include <stdio.h>`).  
-Furthermore, only the functions `int printf(char *format, ...)` and `int scanf(const char *format, ...)` must be supported, as defined in [11]: the format string allows interpretation of sequences of the form `%[width][code]` (width only in case of output). Provide support for at least for the type codes `d`, `i`, `s` and `c`. You may consider the `char*` types to be `char` arrays. Flags and modifiers, as described in [14], do not need to be supported.  
+Furthermore, only the functions `int printf(char *format, ...)` and `int scanf(const char *format, ...)` must be supported, as defined in \[11]: the format string allows interpretation of sequences of the form `%[width][code]` (width only in case of output). Provide support for at least for the type codes `d`, `i`, `s` and `c`. You may consider the `char*` types to be `char` arrays. Flags and modifiers, as described in [14], do not need to be supported.  
 The behavior of scanf is well documented in the man pages [15, 10].
 Support for single line (and multi-line) comments.
 
@@ -31,10 +31,9 @@ The compiler is allowed to stop when it encounters a syntax error. An indication
 
 This language is the machine language of the virtual P stack machine from the course material, augmented with input, output and halt instructions. Documentation on this stack machine, as well as executables, can be found on the compilers website [1]. Remarks for code generation from C to P:
 
-* Initialization of variables without initializer. By default, initialize variables without initializer to 0. This is also possible for char. Obviously this has a negative effect on performance, especially with arrays, which is why initialization is usually performed dynamically in a loop. Hence, it is possible, as optional optimization, not to implement default initialization of array elements and generate a warning when an array is read from before its elements have been
-initialized. Note that a warning should be generated for variables which are initialized with themselves.
+* Initialization of variables without initializer. Obviously this has a negative effect on performance, especially with arrays, which is why initialization is usually performed dynamically in a loop. Hence, it is possible, as optional optimization, not to implement default initialization of array elements and generate a warning when an array is read from before its elements have been initialized. Note that a warning should be generated for variables which are initialized with themselves.
 
-* scanf and strings. For a `scanf("%s", ...)` statement, generate a loop of *in c* instructions. Exit the loop upon reading the escape character (ascii code 27). 
+* scanf and strings. For a `scanf("%s", ...)` statement, generate a loop of `in c` instructions. Exit the loop upon reading the escape character (ascii code 27). 
 
 
 ## Optimisations
