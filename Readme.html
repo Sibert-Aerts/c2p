@@ -1,0 +1,117 @@
+<head>
+<style>
+    body{
+        font-family: arial;
+        margin-left: 4em;
+        margin-top: 2em;
+        margin-bottom: 500px;
+        width: 800px;
+    }
+    .code-box{
+        font-family: "Lucida Console", "Courier New";
+        font-size: 14px;
+        background-color: #BCC;
+        padding: 3px;
+        border-radius: 4px;
+        border: 1px solid #ABA;
+        max-width: 80%;
+    }
+    .code{
+        font-family: "Lucida Console", "Courier New";
+        font-size: 14px;
+        background-color: #CCF;
+        padding: 2px;
+        border-radius: 2px;
+    }
+    li{
+        margin-top: 6px;
+    }
+</style>
+    
+</head>
+
+<body>
+    <h1>c2p</h1>
+    
+    <h3>Introductie</h3>
+    <p>
+        Dit is de inzending voor fase 1 van het project voor het vak Compilers.<br>
+        De groep bestaat uit Sibert Aerts en Lynn van Hauwe.
+    </p>
+
+    <h3>Gebruik</h3>
+    <p>
+        Om de grammatica te compileren en onmiddelijk op de juiste plaats te steken hoeft men enkel 
+        de volgende commandos uit te voeren vanuit de basis directory:
+        <p class="code-box">
+            cd grammar<br>
+            ./convert SmallC.g4
+        </p>
+        Om een bestand <span class="code">code.c</span> te compileren dient de volgende code te worden uitgevoerd:
+        <p class="code-box">
+            python3 src/main.py code.c
+        </p>
+        Indien succesvol produceert dit 2 bestanden:
+        <ul>
+            <li><span class="code">AST.dot</span>: De AST boom in DOT formaat.</li>
+            <li><span class="code">code.p</span>: De gecompileerde p-code.</li>
+        </ul>
+    </p>
+
+    <h3>Functionaliteit:</h3>
+    <p>
+        De compiler bevat al bijna elke noodzakelijke en optionele functionaliteit, de enige ontbrekende zijn:
+
+        <ul>
+            <li>Het gebruik van <span class="code">printf</span> om geformatteerde variabelen te printen ontbreekt.</li>
+            <li><span class="code">scanf</span> ontbreekt volledig.</li>
+            <li>Controlleren of non-void functies noodzakelijk een <span class="code">return</span> statement hebben.</li>
+            <li>Arrays ontbreken volledig.</li>
+            <li>Impliciete conversions ontbreken volledig.</li>
+            <li>Error analyse: Aangeven van de plaats in de code waar een fout voorkwam ontbreekt.</li>
+            <li>Optimisaties ontbreken volledig.</li>
+        </ul>
+    </p>
+
+    <h3>Extra's:</h3>
+    <p>
+        De enige ongevraagde extra functionaliteit die de compiler momenteel ondersteunt is het type <span class="code">bool</span>, 
+        en de constanten <span class="code">true</span> en <span class="code">false</span>.
+    </p>
+
+    <h3>Grammatica:</h3>
+    <ul>
+        <li>De grammatica bevindt zich in <span class="code">grammar/SmallC.g4</span>.</li>
+        <li>De antlr gegenereerde code wordt in <span class="code">src/c2p/grammar/antlr/</span> geplaatst.</li>
+    </ul>
+
+    <h3>Tests:</h3>
+    <p>
+        Om de tests uit te voeren dient men de volgende code uit te voeren vanuit de <span class="code">src/</span> directory:
+        <p class="code-box">
+            python3 -m unittest
+        </p>
+        Dit voert automatisch de volgende tests uit:
+
+    </p>
+    <ul>
+        <li><span class="code">src/c2p/grammar/test_ctypes.py</span>: Tests op de CType klasse.</li>
+        <li><span class="code">src/c2p/codegen/test_semantic_errors.py</span>: Tests op de Semantische analyse tijdens de codegen, 
+        op basis van de voorbeeldbestanden in <span class="code">src/test/wrong</span>.</li>
+        <li><span class="code">src/c2p/instructions/test_instructions.py</span>: Tests op de klassen voor verschillende p-instructies.</li>
+        <li>
+            <span class="code">src/c2p/grammar/ast/test_visitor.py</span>: Tests de Visitor en de acceptatie van syntactisch correcte code, 
+            op basis van de voorbeeldbestanden in <span class="code">src/c2p/grammar/ast/test</span>. <br>
+            (Merk op dat geen van deze bestanden correcte code produceert, en dat deze tests enkel voor syntactische correctheid test.)
+        </li>
+    </ul>
+
+    <h3>Voorbeelden</h3>
+    <p>
+        Reeds correct compilerende voorbeeldbestanden bevinden zich in <span class="code">src/test</span>.<br>
+        Om de correctheid van de gegenereerde code te controlleren moet men nog wel manueel de inhoud van de stack na de uitvoering bekijken.
+        Ieder bestand beschrijft in zijn commentaar de waarden die elke variabele zou moeten bevatten aan het einde van de uitvoering.
+        Aangezien variabelen in dezelfde volgorde op de stack komen als dat ze gedeclareerd zijn, is het praktisch niet moeilijk om de correctheid na te gaan.<br>
+    </p>
+
+</body>
