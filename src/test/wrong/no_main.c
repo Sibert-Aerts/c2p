@@ -1,0 +1,3 @@
+int something(){
+    int x;
+}

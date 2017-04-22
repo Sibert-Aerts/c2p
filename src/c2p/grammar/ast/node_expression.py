@@ -597,7 +597,7 @@ class Call(ASTNode):
             # TODO: Type compatibility
             if c.type.ignoreConst() != sig.ignoreConst():
                 raise SemanticError('Invalid call to "{}": Expected expression of type {}, got {}.' \
-                    .format(name, arg, c.type))
+                    .format(name, sig, c.type))
         
         argSize = sum([s.ptype().size() for s in signature])
 
