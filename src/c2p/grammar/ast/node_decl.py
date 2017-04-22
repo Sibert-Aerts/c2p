@@ -2,6 +2,7 @@ from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CFloat, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
+from ...codegen.semantic_error import SemanticError
 from ...ptypes import PAddress
 from ... import instructions
 
@@ -77,7 +78,7 @@ def init_to_code(env : Environment, name : str, init : Expression) -> CodeNode:
 
     # TODO: type compatibility & implicit casting logic!
     if(var.ctype.ignoreConst() != cinit.type.ignoreConst()):
-        raise ValueError('Incompatible initialisation of {} as {}.'.format(var.ctype, cinit.type))
+        raise SemanticError('Incompatible initialisation of {} as {}.'.format(var.ctype, cinit.type))
 
     # Store the value
     code.add(instructions.Sto(var.ptype))

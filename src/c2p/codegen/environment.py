@@ -4,6 +4,7 @@ from c2p.grammar.ctypes import *
 from c2p import instructions
 from c2p.instructions.branch import Label
 from c2p.codegen.code_node import CodeNode
+from c2p.codegen.semantic_error import SemanticError
 
 VariableRecord = NamedTuple('VariableRecord', [
     ('ctype', CType),
@@ -80,23 +81,23 @@ class Scope:
     def _get_variable(self, name: str) -> VariableRecord:
         variable = self.find(name)
         if not variable:
-            raise ValueError('Use of undefined variable "{}"'.format(name))
+            raise SemanticError('Use of undefined variable "{}"'.format(name))
         if isinstance(variable, FunctionRecord):
-            raise ValueError('Attempted to use symbol "{}" as a variable when it is a function.'.format(name))
+            raise SemanticError('Attempted to use symbol "{}" as a variable when it is a function.'.format(name))
         return variable
 
     def _get_function(self, name: str) -> FunctionRecord:
         function = self.find(name)
         if not function:
-            raise ValueError('Use of undefined function "{}"'.format(name))
+            raise SemanticError('Use of undefined function "{}"'.format(name))
         if isinstance(function, VariableRecord):
-            raise ValueError('Attempted to use symbol "{}" as a function when it is a variable.'.format(name))
+            raise SemanticError('Attempted to use symbol "{}" as a function when it is a variable.'.format(name))
         return function
 
     def _register_variable(self, name: str, ctype: CType) -> None:
         # Check if the symbol is already defined in the current scope
         if name in self.symbols:
-            raise ValueError('Repeated declaration of symbol "{}"'.format(name))
+            raise SemanticError('Repeated declaration of symbol "{}"'.format(name))
 
         # Make a new variable record and register it to the current scope.
         ptype = ctype.ptype()
@@ -108,7 +109,6 @@ class Scope:
         else:
             address += 9
 
-        print('registered var {} at depth {} at address {}'.format(name, self.depth, address))
         self.symbols[name] = VariableRecord(ctype, ptype, address, self.depth, isGlobal)
 
     def _register_function(self, name: str, returnType: CType, signature: List[CType]) -> Label:
@@ -116,7 +116,7 @@ class Scope:
 
         # Check if the symbol is already defined in the current scope
         if name in self.symbols:
-            raise ValueError('Repeated declaration of symbol "{}"'.format(name))
+            raise SemanticError('Repeated declaration of symbol "{}"'.format(name))
 
         # Make a function record and register it
         label = Label('f_{}'.format(name))
@@ -183,11 +183,11 @@ class Environment:
         return self.scope._alloc(size)
 
     def get_variable(self, name: str) -> VariableRecord:
-        '''Retrieve a variable record from this scope or above, or throw a ValueError.'''
+        '''Retrieve a variable record from this scope or above, or throw a SemanticError.'''
         return self.scope._get_variable(name)
 
     def get_function(self, name: str) -> FunctionRecord:
-        '''Retrieve a function record from this scope or above, or throw a ValueError.'''
+        '''Retrieve a function record from this scope or above, or throw a SemanticError.'''
         return self.scope._get_function(name)
 
     def register_variable(self, name: str, ctype: CType) -> None:

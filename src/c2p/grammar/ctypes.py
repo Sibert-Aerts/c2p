@@ -36,10 +36,10 @@ class CType:
 
 class CVoid(CType):
     def ptype(self) -> PType:
-        raise ValueError('void has no PType!')
+        raise SemanticError('void has no PType!')
 
     def default(self) -> Any:
-        raise ValueError('void has no default value!')
+        raise SemanticError('void has no default value!')
 
 
 class CChar(CType):
@@ -104,7 +104,7 @@ class CArray(CLayerType):
         if self.length:
             return self.length * self.t.size()
         else:
-            raise ValueError('Attempted to get length of array with non-specified length.')
+            raise SemanticError('Attempted to get length of array with non-specified length.')
 
     def ptype(self) -> PType:
         return PAddress

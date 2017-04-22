@@ -2,6 +2,7 @@ from typing import Optional, Any
 from ..ctypes import CVoid
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
+from ...codegen.semantic_error import SemanticError
 from ... import instructions
 
 class ASTNode:
@@ -9,7 +10,7 @@ class ASTNode:
         raise NotImplementedError()
 
     def to_lcode(self, env: Environment) -> CodeNode:
-        raise ValueError('{} is not a valid L-Value expression'.format(self.__class__.__name__))
+        raise SemanticError('{} is not a valid L-Value expression.'.format(self.__class__.__name__))
 
 
 class Identifier(ASTNode):
@@ -32,9 +33,9 @@ class ExprStatement(ASTNode):
         code.add(c)
 
         if c.type is None:
-            raise NotImplementedError('Forgot to put the type in when compiling {}!!!'.format(self.expression.__class__.__name__))
+            raise NotImplementedError('Forgot to set the type when compiling {}!'.format(self.expression.__class__.__name__))
         if c.maxStackSpace == 0:
-            raise NotImplementedError('Forgot to put the maxStackSpace in when compiling {}!!!'.format(self.expression.__class__.__name__))
+            raise NotImplementedError('Forgot to set the maxStackSpace when compiling {}!'.format(self.expression.__class__.__name__))
 
         # discard the top of stack...
         # there is no instruction that simply does SP := SP - 1...

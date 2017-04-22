@@ -2,6 +2,7 @@ from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CFloat, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
+from ...codegen.semantic_error import SemanticError
 from ...codegen import printf
 from ...ptypes import *
 from ... import instructions
@@ -70,7 +71,7 @@ class OperationAssignment(ASTNode):
 
         # TODO: type compatibility & implicit casting logic!
         if(cl.type != cr.type.ignoreConst()):
-            raise ValueError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
+            raise SemanticError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
 
         # Apply the operation (if any)
         if self.operation:
@@ -122,13 +123,13 @@ class TernaryIf(ASTNode):
 
         # TODO: type equivalence
         if cl.type.ignoreConst() != cr.type.ignoreConst():
-            raise ValueError('Invalid ternary expression of both types {} and {}'.format(cl.type, cr.type))
+            raise SemanticError('Invalid ternary expression of both types {} and {}'.format(cl.type, cr.type))
 
         code.type = cl.type.ignoreConst()
 
         if cc.type.ignoreConst() != CBool():
             # TODO: boolean conversion
-            raise ValueError('Invalid boolean expression of type {}'.format(cc.type))
+            raise SemanticError('Invalid boolean expression of type {}'.format(cc.type))
 
         # Make labels (the Label class ensures the labels are unique)
         falseLabel = instructions.Label('ternfalse')
@@ -171,7 +172,7 @@ class BinaryBooleanOperationNode(ASTNode):
         # TODO: boolean conversions.
         for c in (cl, cr):
             if(c.type.ignoreConst() != CBool()):
-                raise ValueError('Attempted to use variable of type {} as a boolean.'.format(cl.type))
+                raise SemanticError('Attempted to use variable of type {} as a boolean.'.format(cl.type))
 
         code.add(self.operation())
 
@@ -206,7 +207,7 @@ class ComparisonNode(ASTNode):
 
         # TODO: type compatibility & implicit casting logic!
         if(cl.type.ignoreConst() != cr.type.ignoreConst()):
-            raise ValueError('Invalid comparison {} between values of type of {} and {}.'.format(self.operation.__name__, cr.type, cl.type))
+            raise SemanticError('Invalid comparison {} between values of type of {} and {}.'.format(self.operation.__name__, cr.type, cl.type))
 
         code.add(self.operation(cl.type.ptype()))
 
@@ -257,7 +258,7 @@ class BinaryNumericOperationNode(ASTNode):
 
         # TODO: type compatibility & implicit casting logic!
         if(cl.type.ignoreConst() != cr.type.ignoreConst()):
-            raise ValueError('Invalid operation {} between values of type of {} to {}.'.format(self.operation.__name__, cr.type, cl.type))
+            raise SemanticError('Invalid operation {} between values of type of {} to {}.'.format(self.operation.__name__, cr.type, cl.type))
 
         code.add(self.operation(cl.type.ptype()))
 
@@ -426,7 +427,7 @@ class Dereference(ASTNode):
             # the type of this expression is the type that's being pointed at (CPointer.t)
             code.type = c.type.t
         else:
-            raise ValueError('Expression of type {} cannot be dereferenced.'.format(c.type))
+            raise SemanticError('Expression of type {} cannot be dereferenced.'.format(c.type))
 
         code.add(c)
         code.add(instructions.Ind(c.type.t.ptype()))
@@ -446,7 +447,7 @@ class Dereference(ASTNode):
             # the type of this expression is the type that's being pointed at (CPointer.t)
             code.type = c.type.t
         else:
-            raise ValueError('Expression of type {} cannot be dereferenced into an L-Value.'.format(c.type))
+            raise SemanticError('Expression of type {} cannot be dereferenced into an L-Value.'.format(c.type))
 
         # We don't need to add any instructions, because of how assignment instructions work.
         code.maxStackSpace = c.maxStackSpace
@@ -464,8 +465,9 @@ class LogicalNot(ASTNode):
         c = self.inner.to_code(env)
         code.add(c)
 
+        # TODO: bool conversion
         if c.type.ignoreConst() != CBool():
-            raise ValueError('Logical not on expression of type {}, expected bool.'.format(c.type))
+            raise SemanticError('Logical negation on expression of type {}, expected bool.'.format(c.type))
 
         code.add(instructions.Not())
 
@@ -485,7 +487,7 @@ class Negate(ASTNode):
         code.add(c)
 
         if not isinstance(c.type.ignoreConst(), (CFloat, CInt)):
-            raise ValueError('Negation on expression of type {}, expected numeric.'.format(c.type))
+            raise SemanticError('Negation on expression of type {}, expected numeric.'.format(c.type))
 
         code.add(instructions.Neg(c.type.ptype()))
 
@@ -507,7 +509,7 @@ class Index(ASTNode):
 
         # Ensure the array is indexable
         if not isinstance(ca.type, (CPointer, CArray)):
-            raise ValueError('Expression of type {} cannot be indexed.'.format(ca.type))
+            raise SemanticError('Expression of type {} cannot be indexed.'.format(ca.type))
 
         # The type of the items in the array (may itself be an array)
         itemType = ca.type.t
@@ -515,7 +517,7 @@ class Index(ASTNode):
         # The index
         ci = self.index.to_code(env)
         if ci.type.ignoreConst() != CInt():
-            raise ValueError('Cannot use expression of type {} as index.'.format(ci.type))
+            raise SemanticError('Cannot use expression of type {} as index.'.format(ci.type))
 
         # Load array and index onto stack
         code.add(ca)
@@ -538,7 +540,7 @@ class Index(ASTNode):
 
         # Ensure the array is indexable and is also const-free
         if not isinstance(ca.type, (CPointer, CArray)) or ca.type.ignoreConst() != ca.type:
-            raise ValueError('Expression of type {} cannot be indexed into an L-Value.'.format(ca.type))
+            raise SemanticError('Expression of type {} cannot be indexed into an L-Value.'.format(ca.type))
         
         # The type of the items in the array (may itself be an array)
         itemType = ca.type.t
@@ -546,7 +548,7 @@ class Index(ASTNode):
         # The index
         ci = self.index.to_code(env)
         if ci.type.ignoreConst() != CInt():
-            raise ValueError('Cannot use expression of type {} as index.'.format(ci.type))
+            raise SemanticError('Cannot use expression of type {} as index.'.format(ci.type))
 
         # Load array and index onto stack
         code.add(ca)
@@ -576,14 +578,14 @@ class Call(ASTNode):
 
         # Identify the called function (if it exists)
         if not isinstance(self.name, IdentifierExpression):
-            raise ValueError('Call to non-identifier.')
+            raise SemanticError('Call to non-identifier.')
 
         name = self.name.identifier.name
         returnType, signature, label = env.get_function(name)
 
         # Verify the number of arguments
         if len(signature) != len (self.arguments):
-            raise ValueError('Invalid call to "{}": Expected {} arguments, got {}.' \
+            raise SemanticError('Invalid call to "{}": Expected {} arguments, got {}.' \
                 .format(name, len(signature), len(self.arguments)))
 
         # Load the arguments onto the stack and verify their types
@@ -594,7 +596,7 @@ class Call(ASTNode):
 
             # TODO: Type compatibility
             if c.type.ignoreConst() != sig.ignoreConst():
-                raise ValueError('Invalid call to "{}": Expected expression of type {}, got {}.' \
+                raise SemanticError('Invalid call to "{}": Expected expression of type {}, got {}.' \
                     .format(name, arg, c.type))
         
         argSize = sum([s.ptype().size() for s in signature])

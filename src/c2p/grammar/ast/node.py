@@ -74,8 +74,6 @@ class FunctionDefinition(ASTNode):
         env.undeepen()
         env.returnType = None
 
-
-        print(name, 'maxVarSpace', maxVarSpace)
         # maxVarSpace + 5 because we need to keep the frame header in mind
         # maxStackSpace + 5 to be safe, or something
         code.add(instructions.Ent(bodyc.maxStackSpace + 5, maxVarSpace + 5))
@@ -128,6 +126,6 @@ class Program(ASTNode):
         code.add(functionCode)
 
         if not code.foundMain:
-            raise ValueError('No \'main\' function found.')
+            raise SemanticError('No \'main\' function found.')
 
         return code

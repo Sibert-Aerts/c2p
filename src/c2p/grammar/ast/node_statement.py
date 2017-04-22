@@ -2,6 +2,7 @@ from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CFloat, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
+from ...codegen.semantic_error import SemanticError
 from ...ptypes import PAddress
 from ... import instructions
 
@@ -149,7 +150,7 @@ class BreakStatement(ASTNode):
 
         # Check if we're inside a loop or not
         if loopScope is None:
-            ValueError('Attempted to "break" outside a loop.')
+            SemanticError('Attempted to "break" outside a loop.')
 
         code.add(instructions.Ujp(loopScope.breakLabel))
 
@@ -166,7 +167,7 @@ class ContinueStatement(ASTNode):
 
         # Check if we're inside a loop or not
         if loopScope is None:
-            ValueError('Attempted to "continue" outside a loop.')
+            SemanticError('Attempted to "continue" outside a loop.')
 
         code.add(instructions.Ujp(loopScope.continueLabel))
 
@@ -185,7 +186,7 @@ class ReturnStatement(ASTNode):
             # TODO: type compatibility
             # Ensure we're returning the right thing
             if c.type.ignoreConst() != env.returnType.ignoreConst():
-                raise ValueError('Attempted to return expression of type {}, expected {}.'.format(c.type, env.returnType))
+                raise SemanticError('Attempted to return expression of type {}, expected {}.'.format(c.type, env.returnType))
 
             # Put the return value where we can find it later: On top of the previous stack, where MP points to
             code.add(instructions.Str(c.type.ptype(), 0, 0))
@@ -194,7 +195,7 @@ class ReturnStatement(ASTNode):
             return code
         else:
             if env.returnType != CVoid():
-                raise ValueError('Cannot return an expression in a function that returns void.')
+                raise SemanticError('Cannot return an expression in a function that returns void.')
 
             code = CodeNode()
             # Return without value
