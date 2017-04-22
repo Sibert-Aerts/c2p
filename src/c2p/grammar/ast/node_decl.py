@@ -64,7 +64,7 @@ class InitDeclarator(ASTNode):
 
 # I pulled this out of the Declaration.to_code function because it's easier that way
 # Essentially a simpler version of assignment.
-def init_to_code(env : Environment, name : str, decl : InitDeclarator) -> CodeNode:
+def init_to_code(env : Environment, name : str, init : Expression) -> CodeNode:
     code = CodeNode()
 
     # Load the variable's address onto the stack
@@ -72,7 +72,7 @@ def init_to_code(env : Environment, name : str, decl : InitDeclarator) -> CodeNo
     code.add(instructions.Lda(0, var.address))
 
     # Evaluate the right expression and put it on the stack
-    cinit = decl.init.to_code(env)
+    cinit = init.to_code(env)
     code.add(cinit)
 
     # TODO: type compatibility & implicit casting logic!
@@ -98,14 +98,16 @@ class Declaration(ASTNode):
             declarationType, name = decl.declarator.to_var(self.type)
             env.register_variable(name, declarationType)
 
-            if decl.init != None:
-                c = init_to_code(env, name, decl)
-                code.add(c)
-
-                # max stack space depends entirely on the max. required by any of the init assignments
-                code.maxStackSpace = max(code.maxStackSpace, c.maxStackSpace)
+            init = None
+            if decl.init is not None:
+                init = decl.init
             else:
-                # TODO: default initialisation?
-                pass
+                # Initialise as zero: init is a Constant
+                init = Constant(CConst(declarationType), declarationType.default())
+
+            c = init_to_code(env, name, init)
+            code.add(c)
+            # max stack space depends entirely on the max. required by any of the init assignments
+            code.maxStackSpace = max(code.maxStackSpace, c.maxStackSpace)
 
         return code

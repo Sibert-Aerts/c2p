@@ -1,4 +1,5 @@
 from ..ptypes import PType, PAddress, PBoolean, PCharacter, PInteger, PReal
+from typing import Any
 
 class CType:
     def __init__(self) -> None:
@@ -20,6 +21,9 @@ class CType:
     def ptype(self) -> PType:
         raise NotImplementedError()
 
+    def default(self) -> Any:
+        raise NotImplementedError()
+
     def size(self) -> int:
         # Used for array indexing
         return 1
@@ -34,25 +38,40 @@ class CVoid(CType):
     def ptype(self) -> PType:
         raise ValueError('void has no PType!')
 
+    def default(self) -> Any:
+        raise ValueError('void has no default value!')
+
 
 class CChar(CType):
     def ptype(self) -> PType:
         return PCharacter
+
+    def default(self) -> Any:
+        return '\\0'
 
 
 class CBool(CType):
     def ptype(self) -> PType:
         return PBoolean
 
+    def default(self) -> Any:
+        return False
+
 
 class CInt(CType):
     def ptype(self) -> PType:
         return PInteger
 
+    def default(self) -> Any:
+        return 0
+
 
 class CFloat(CType):
     def ptype(self) -> PType:
         return PReal
+
+    def default(self) -> Any:
+        return 0.0
 
 
 class CLayerType(CType):
@@ -69,6 +88,9 @@ class CLayerType(CType):
 class CPointer(CLayerType):
     def ptype(self) -> PType:
         return PAddress
+
+    def default(self) -> Any:
+        return 0
 
 class CArray(CLayerType):
     def __init__(self, t: CType, length=None) -> None:
@@ -87,11 +109,17 @@ class CArray(CLayerType):
     def ptype(self) -> PType:
         return PAddress
 
+    def default(self) -> Any:
+        return 0
+
 class CConst(CLayerType):
     def ptype(self) -> PType:
         return self.t.ptype()
 
     def ignoreConst(self):
         return self.t.ignoreConst()
+
+    def default(self) -> Any:
+        return self.t.default()
 
 fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar(), 'bool' : CBool()}
