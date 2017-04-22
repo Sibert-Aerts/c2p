@@ -9,13 +9,13 @@ The behavior of scanf is well documented in the man pages [15, 10].
 Support for single line (and multi-line) comments.
 
 6. **Functions (mandatory)**  
-  1. (optional) Check whether all paths in a function body end with a return statement (not required for procedures that return `void`).
+    1. (optional) Check whether all paths in a function body end with a return statement (not required for procedures that return `void`).
 
 7. **Arrays (mandatory)**  
 Array variables should be supported, as well as operations on individual array elements. Mind the correct use of dimensions and indices. Support for 1-dimensional static arrays is a mandatory feature; support for multi-dimensional arrays is optional, as well as dynamic arrays and assignments of complete arrays or array rows.
-  1. (optional) multi-dimensional arrays.
-  1. (optional) assignments of complete arrays or array rows in case of multi-dimensional arrays.
-  1. (optional) dynamic arrays.
+    1. (optional) multi-dimensional arrays.
+    1. (optional) assignments of complete arrays or array rows in case of multi-dimensional arrays.
+    1. (optional) dynamic arrays.
   
 8. **Conversions** (optional)  
 As a first extension you can support implicit conversions. Consider the following order on the basic types: `float isRicherThan int isRicherThan char`  
