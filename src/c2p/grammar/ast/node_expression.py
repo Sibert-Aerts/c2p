@@ -646,7 +646,7 @@ class IdentifierExpression(ASTNode):
 
         var = env.get_variable(self.identifier.name)
 
-        code.add(instructions.Lod(var.ptype, 0, var.address))
+        code.add(instructions.Lod(var.ptype, 0 if not var.isGlobal else 1, var.address))
         code.type = var.ctype
 
         code.maxStackSpace = 1
@@ -658,7 +658,7 @@ class IdentifierExpression(ASTNode):
 
         var = env.get_variable(self.identifier.name)
 
-        code.add(instructions.Lda(0, var.address))
+        code.add(instructions.Lda(0 if not var.isGlobal else 1 , var.address))
 
         # TODO: Something about checking whether or not the variable is (at some level) const?
         code.type = var.ctype

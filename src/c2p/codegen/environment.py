@@ -54,9 +54,9 @@ class Scope:
         that are stored in the current frame (so no globals).
         Used to help determine the address for variables defined in a Statement inside a function.
         '''
-        varSpace = 0
-        scope = self
-        while scope.depth != 0:
+        varSpace = self.varSpace
+        scope = self.parent
+        while scope and scope.depth != 0:
             varSpace += scope.varSpace
             scope = scope.parent
         return varSpace
