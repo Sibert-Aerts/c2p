@@ -191,7 +191,7 @@ class LogicalAnd(BinaryBooleanOperationNode):
 
 
 class ComparisonNode(ASTNode):
-    '''A Node representing a boolean comparison between two expressions of any type.'''
+    '''A Node representing a boolean comparison between two expressions of a numeric type.'''
     def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
         self.left = left
         self.right = right
@@ -607,6 +607,9 @@ class Call(ASTNode):
         # If the function returns, this should consume everything we put on the stack and
         # put a single value of type returnType on the stack.
         code.type = returnType
+        # The call itself will increase the stack bigly,
+        # but within this frame, it only uses a single spot.
+        code.maxStackSpace = 1
 
         return code
 
