@@ -29,7 +29,7 @@ class CType:
         return 1
 
     def __repr__(self):
-        return self.__class__.__name__
+        raise NotImplementedError()
 
     def ignoreConst(self):
         return self
@@ -41,6 +41,9 @@ class CVoid(CType):
     def default(self) -> Any:
         raise SemanticError('void has no default value!')
 
+    def __repr__(self):
+        return 'void'
+
 
 class CChar(CType):
     def ptype(self) -> PType:
@@ -48,6 +51,9 @@ class CChar(CType):
 
     def default(self) -> Any:
         return '\\0'
+
+    def __repr__(self):
+        return 'char'
 
 
 class CBool(CType):
@@ -57,6 +63,9 @@ class CBool(CType):
     def default(self) -> Any:
         return False
 
+    def __repr__(self):
+        return 'bool'
+
 
 class CInt(CType):
     def ptype(self) -> PType:
@@ -65,6 +74,9 @@ class CInt(CType):
     def default(self) -> Any:
         return 0
 
+    def __repr__(self):
+        return 'int'
+
 
 class CFloat(CType):
     def ptype(self) -> PType:
@@ -72,6 +84,9 @@ class CFloat(CType):
 
     def default(self) -> Any:
         return 0.0
+
+    def __repr__(self):
+        return 'float'
 
 
 class CLayerType(CType):
@@ -91,6 +106,9 @@ class CPointer(CLayerType):
 
     def default(self) -> Any:
         return 0
+
+    def __repr__(self):
+        return self.t.__repr__() + '*'
 
 class CArray(CLayerType):
     def __init__(self, t: CType, length=None) -> None:
@@ -112,6 +130,9 @@ class CArray(CLayerType):
     def default(self) -> Any:
         return 0
 
+    def __repr__(self):
+        return self.t.__repr__() + '[' + (self.lenght if self.length else '') + ']'
+
 class CConst(CLayerType):
     def ptype(self) -> PType:
         return self.t.ptype()
@@ -121,5 +142,11 @@ class CConst(CLayerType):
 
     def default(self) -> Any:
         return self.t.default()
+
+    def __repr__(self):
+        if isinstance(self.t, CPointer):
+            return self.t.t.__repr__() + '* const'
+        else:
+            return 'const ' + self.t.__repr__()
 
 fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar(), 'bool' : CBool()}
