@@ -87,7 +87,7 @@ def init_to_code(env : Environment, name : str, init : Expression, where: Source
 
     # TODO: type compatibility & implicit casting logic!
     if(var.ctype.ignoreConst() != cinit.type.ignoreConst()):
-        self.semanticError('Incompatible initialisation of {} as {}.'.format(var.ctype, cinit.type))
+        raise SemanticError('Incompatible initialisation of {} as {}.'.format(var.ctype, cinit.type), where)
 
     # Store the value
     code.add(instructions.Sto(var.ptype))

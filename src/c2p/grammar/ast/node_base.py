@@ -14,10 +14,10 @@ class ASTNode:
         raise NotImplementedError()
 
     def to_lcode(self, env: Environment) -> CodeNode:
-        self.semanticError('{} is not a valid L-Value expression.'.format(self.__class__.__name__))
+        raise self.semanticError('{} is not a valid L-Value expression.'.format(self.__class__.__name__))
 
-    def semanticError(self, message: Any) -> None:
-        raise SemanticError(message, self.where)
+    def semanticError(self, message: Any) -> SemanticError:
+        return SemanticError(message, self.where)
 
 
 class Identifier(ASTNode):

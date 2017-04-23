@@ -107,7 +107,7 @@ class ForStatement(ASTNode):
             if isinstance(self.left, Declaration):
                 cleft = self.left.to_code(env)
             else: # cleft is an Expression
-                cleft = ExprStatement(self.left).to_code(env)
+                cleft = ExprStatement(self.left.where, self.left).to_code(env)
             code.maxStackSpace = max(code.maxStackSpace, cleft.maxStackSpace)
 
         ccond = None
@@ -117,7 +117,7 @@ class ForStatement(ASTNode):
 
         cright = None
         if self.right:
-            cright = ExprStatement(self.where, self.right).to_code(env)
+            cright = ExprStatement(self.right.where, self.right).to_code(env)
             code.maxStackSpace = max(code.maxStackSpace, cright.maxStackSpace)
 
         cbody = None
@@ -154,7 +154,7 @@ class BreakStatement(ASTNode):
 
         # Check if we're inside a loop or not
         if loopScope is None:
-            SemanticError('Attempted to "break" outside a loop.')
+            self.semanticError('Attempted to "break" outside a loop.')
 
         code.add(instructions.Ujp(loopScope.breakLabel))
 
@@ -171,7 +171,7 @@ class ContinueStatement(ASTNode):
 
         # Check if we're inside a loop or not
         if loopScope is None:
-            SemanticError('Attempted to "continue" outside a loop.')
+            self.semanticError('Attempted to "continue" outside a loop.')
 
         code.add(instructions.Ujp(loopScope.continueLabel))
 
@@ -191,7 +191,7 @@ class ReturnStatement(ASTNode):
             # TODO: type compatibility
             # Ensure we're returning the right thing
             if c.type.ignoreConst() != env.returnType.ignoreConst():
-                self.semanticError('Attempted to return expression of type {}, expected {}.'.format(c.type, env.returnType))
+                raise self.semanticError('Attempted to return expression of type {}, expected {}.'.format(c.type, env.returnType))
 
             # Put the return value where we can find it later: On top of the previous stack, where MP points to
             code.add(instructions.Str(c.type.ptype(), 0, 0))
@@ -200,7 +200,7 @@ class ReturnStatement(ASTNode):
             return code
         else:
             if env.returnType != CVoid():
-                self.semanticError('Cannot return an expression in a function that returns void.')
+                raise self.semanticError('Cannot return an expression in a function that returns void.')
 
             code = CodeNode()
             # Return without value

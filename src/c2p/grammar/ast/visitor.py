@@ -25,9 +25,9 @@ def applyPointerAsDeclarator(decl:Declarator, pointer:SmallCParser.PointerContex
 
     for token in children:
         if token == '*':
-            decl = PointerDeclarator(decl)
+            decl = PointerDeclarator(decl.where, decl)
         elif token == 'const':
-            decl = ConstantDeclarator(decl)
+            decl = ConstantDeclarator(decl.where, decl)
 
     return decl
 
@@ -249,7 +249,7 @@ class ASTVisitor(SmallCVisitor):
             raise ASTError("Missing type specifier")
 
         if isConst:
-            return CConst(where(ctx), theType)
+            return CConst(theType)
         return theType
 
 

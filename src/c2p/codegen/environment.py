@@ -129,7 +129,7 @@ class Scope:
         self.breakLabel = br
         self.continueLabel = cont
 
-    def _find_loop(self) -> Optional[str]:
+    def _find_loop(self) -> Optional['Scope']:
         scope = self
         while scope:
             if scope.isLoop:
@@ -203,7 +203,7 @@ class Environment:
         '''Defines the current scope as a loop, and registers its 'break' and 'continue' labels.'''
         self.scope._set_as_loop(br.label, cont.label)
 
-    def find_loop(self) -> Optional[str]:
+    def find_loop(self) -> Optional['Scope']:
         '''Search upwards through the scope tree (including current scope) to find the first scope defined as a loop.
         Returns None if no such scope is found.'''
         return self.scope._find_loop()

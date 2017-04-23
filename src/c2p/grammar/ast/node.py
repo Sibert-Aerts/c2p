@@ -130,6 +130,6 @@ class Program(ASTNode):
         code.add(functionCode)
 
         if not code.foundMain:
-            self.semanticError('No \'main\' function found.')
+            raise self.semanticError('No \'main\' function found.')
 
         return code

@@ -140,6 +140,7 @@ class CConst(CLayerType):
         return self.t.default()
 
     def __str__(self):
+        # TODO I am almost 100% certain this is wrong
         if isinstance(self.t, CPointer):
             return self.t.t.__str__() + '* const'
         else:
