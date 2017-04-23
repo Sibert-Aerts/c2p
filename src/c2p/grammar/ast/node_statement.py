@@ -2,9 +2,10 @@ from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CFloat, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
-from ...codegen.semantic_error import SemanticError
+from ...codegen.error import SemanticError
 from ...ptypes import PAddress
 from ... import instructions
+from c2p.source_interval import SourceInterval
 
 from .node_base import *
 from .node_expression import *
@@ -13,7 +14,8 @@ from .node_decl import *
 # Statements
 Statement = Any  # of the following:
 class CondStatement(ASTNode):
-    def __init__(self, condition: Expression, trueBody: Statement, falseBody: Optional[Statement]) -> None:
+    def __init__(self, where: SourceInterval, condition: Expression, trueBody: Statement, falseBody: Optional[Statement]) -> None:
+        super().__init__(where)
         self.condition = condition
         self.trueBody = trueBody
         self.falseBody = falseBody
@@ -47,7 +49,8 @@ class CondStatement(ASTNode):
         return code
 
 class WhileStatement(ASTNode):
-    def __init__(self, condition: Expression, body: Statement) -> None:
+    def __init__(self, where: SourceInterval, condition: Expression, body: Statement) -> None:
+        super().__init__(where)
         self.condition = condition
         self.body = body
 
@@ -77,7 +80,8 @@ class WhileStatement(ASTNode):
         return code
 
 class ForStatement(ASTNode):
-    def __init__(self, left: Optional[Union['Declaration', Expression]], center: Optional[Expression], right: Optional[Expression], body: Statement) -> None:
+    def __init__(self, where: SourceInterval, left: Optional[Union['Declaration', Expression]], center: Optional[Expression], right: Optional[Expression], body: Statement) -> None:
+        super().__init__(where)
         self.left = left
         self.center = center
         self.right = right
@@ -105,7 +109,7 @@ class ForStatement(ASTNode):
             else: # cleft is an Expression
                 cleft = ExprStatement(self.left).to_code(env)
             code.maxStackSpace = max(code.maxStackSpace, cleft.maxStackSpace)
-        
+
         ccond = None
         if self.center:
             ccond = self.center.to_code(env)
@@ -113,7 +117,7 @@ class ForStatement(ASTNode):
 
         cright = None
         if self.right:
-            cright = ExprStatement(self.right).to_code(env)
+            cright = ExprStatement(self.where, self.right).to_code(env)
             code.maxStackSpace = max(code.maxStackSpace, cright.maxStackSpace)
 
         cbody = None
@@ -140,8 +144,8 @@ class ForStatement(ASTNode):
         return code
 
 class BreakStatement(ASTNode):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, where: SourceInterval) -> None:
+        super().__init__(where)
 
     def to_code(self, env: Environment) -> CodeNode:
         code = CodeNode()
@@ -157,8 +161,8 @@ class BreakStatement(ASTNode):
         return code
 
 class ContinueStatement(ASTNode):
-    def __init__(self) -> None:
-        pass
+    def __init__(self, where: SourceInterval) -> None:
+        super().__init__(where)
 
     def to_code(self, env: Environment) -> CodeNode:
         code = CodeNode()
@@ -174,7 +178,8 @@ class ContinueStatement(ASTNode):
         return code
 
 class ReturnStatement(ASTNode):
-    def __init__(self, expression: Optional[Expression]) -> None:
+    def __init__(self, where: SourceInterval, expression: Optional[Expression]) -> None:
+        super().__init__(where)
         self.expression = expression
 
     def to_code(self, env: Environment) -> CodeNode:
@@ -186,7 +191,7 @@ class ReturnStatement(ASTNode):
             # TODO: type compatibility
             # Ensure we're returning the right thing
             if c.type.ignoreConst() != env.returnType.ignoreConst():
-                raise SemanticError('Attempted to return expression of type {}, expected {}.'.format(c.type, env.returnType))
+                self.semanticError('Attempted to return expression of type {}, expected {}.'.format(c.type, env.returnType))
 
             # Put the return value where we can find it later: On top of the previous stack, where MP points to
             code.add(instructions.Str(c.type.ptype(), 0, 0))
@@ -195,7 +200,7 @@ class ReturnStatement(ASTNode):
             return code
         else:
             if env.returnType != CVoid():
-                raise SemanticError('Cannot return an expression in a function that returns void.')
+                self.semanticError('Cannot return an expression in a function that returns void.')
 
             code = CodeNode()
             # Return without value
@@ -217,7 +222,8 @@ def blockstmt_to_code(compStmt: 'CompoundStatement', env: Environment) -> CodeNo
     return code
 
 class CompoundStatement(ASTNode):
-    def __init__(self, statements: List[Union['Declaration', Statement]]) -> None:
+    def __init__(self, where: SourceInterval, statements: List[Union['Declaration', Statement]]) -> None:
+        super().__init__(where)
         self.statements = statements
 
     def to_code(self, env: Environment) -> CodeNode:

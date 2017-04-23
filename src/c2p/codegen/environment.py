@@ -4,7 +4,8 @@ from c2p.grammar.ctypes import *
 from c2p import instructions
 from c2p.instructions.branch import Label
 from c2p.codegen.code_node import CodeNode
-from c2p.codegen.semantic_error import SemanticError
+from c2p.codegen.error import SemanticError
+from c2p.source_interval import SourceInterval
 
 VariableRecord = NamedTuple('VariableRecord', [
     ('ctype', CType),
@@ -78,26 +79,26 @@ class Scope:
         self.varScope.maxVarSpace = max(self.varScope.maxVarSpace, offset + 1)
         return offset
 
-    def _get_variable(self, name: str) -> VariableRecord:
+    def _get_variable(self, name: str, where: SourceInterval) -> VariableRecord:
         variable = self.find(name)
         if not variable:
-            raise SemanticError('Use of undefined variable "{}"'.format(name))
+            raise SemanticError('Use of undefined variable "{}"'.format(name), where)
         if isinstance(variable, FunctionRecord):
-            raise SemanticError('Attempted to use symbol "{}" as a variable when it is a function.'.format(name))
+            raise SemanticError('Attempted to use symbol "{}" as a variable when it is a function.'.format(name), where)
         return variable
 
-    def _get_function(self, name: str) -> FunctionRecord:
+    def _get_function(self, name: str, where: SourceInterval) -> FunctionRecord:
         function = self.find(name)
         if not function:
-            raise SemanticError('Use of undefined function "{}"'.format(name))
+            raise SemanticError('Use of undefined function "{}"'.format(name), where)
         if isinstance(function, VariableRecord):
-            raise SemanticError('Attempted to use symbol "{}" as a function when it is a variable.'.format(name))
+            raise SemanticError('Attempted to use symbol "{}" as a function when it is a variable.'.format(name), where)
         return function
 
-    def _register_variable(self, name: str, ctype: CType) -> None:
+    def _register_variable(self, name: str, ctype: CType, where: SourceInterval) -> None:
         # Check if the symbol is already defined in the current scope
         if name in self.symbols:
-            raise SemanticError('Repeated declaration of symbol "{}"'.format(name))
+            raise SemanticError('Repeated declaration of symbol "{}"'.format(name), where)
 
         # Make a new variable record and register it to the current scope.
         ptype = ctype.ptype()
@@ -111,12 +112,12 @@ class Scope:
 
         self.symbols[name] = VariableRecord(ctype, ptype, address, self.depth, isGlobal)
 
-    def _register_function(self, name: str, returnType: CType, signature: List[CType]) -> Label:
+    def _register_function(self, name: str, returnType: CType, signature: List[CType], where: SourceInterval) -> Label:
         assert self.depth == 0, 'register_function not at global scope'
 
         # Check if the symbol is already defined in the current scope
         if name in self.symbols:
-            raise SemanticError('Repeated declaration of symbol "{}"'.format(name))
+            raise SemanticError('Repeated declaration of symbol "{}"'.format(name), where)
 
         # Make a function record and register it
         label = Label('f_{}'.format(name))
@@ -182,21 +183,21 @@ class Environment:
         '''Allocates a spot of size `size` to the current scope, returning its address.'''
         return self.scope._alloc(size)
 
-    def get_variable(self, name: str) -> VariableRecord:
+    def get_variable(self, name: str, where: SourceInterval) -> VariableRecord:
         '''Retrieve a variable record from this scope or above, or throw a SemanticError.'''
-        return self.scope._get_variable(name)
+        return self.scope._get_variable(name, where)
 
-    def get_function(self, name: str) -> FunctionRecord:
+    def get_function(self, name: str, where: SourceInterval) -> FunctionRecord:
         '''Retrieve a function record from this scope or above, or throw a SemanticError.'''
-        return self.scope._get_function(name)
+        return self.scope._get_function(name, where)
 
-    def register_variable(self, name: str, ctype: CType) -> None:
+    def register_variable(self, name: str, ctype: CType, where: SourceInterval) -> None:
         '''Registers a variable to the current scope.'''
-        self.scope._register_variable(name, ctype)
+        self.scope._register_variable(name, ctype, where)
 
-    def register_function(self, name: str, returnType: CType, signature: List[CType]) -> Label:
+    def register_function(self, name: str, returnType: CType, signature: List[CType], where: SourceInterval) -> Label:
         '''Registers a function to the (global) scope and get its label.'''
-        return self.scope._register_function(name, returnType, signature)
+        return self.scope._register_function(name, returnType, signature, where)
 
     def set_as_loop(self, br : Label, cont : Label) -> None:
         '''Defines the current scope as a loop, and registers its 'break' and 'continue' labels.'''

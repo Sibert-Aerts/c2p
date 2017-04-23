@@ -9,7 +9,7 @@ from c2p.grammar.antlr.SmallCParser import SmallCParser
 from c2p.grammar.ast.visitor import ASTVisitor
 from c2p.grammar.ast.visualize import Visualizer
 from .environment import Environment
-from .semantic_error import SemanticError
+from .error import SemanticError
 
 filepath = os.path.dirname(__file__) + "/../../test/wrong/"
 

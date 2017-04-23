@@ -1,7 +1,7 @@
 from typing import Any, List
 from .environment import Environment
 from .code_node import CodeNode
-from .semantic_error import SemanticError
+from .error import SemanticError
 from ..grammar.ctypes import *
 from ..instructions import *
 

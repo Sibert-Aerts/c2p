@@ -2,16 +2,18 @@ from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CFloat, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
-from ...codegen.semantic_error import SemanticError
+from ...codegen.error import SemanticError
 from ...codegen import printf
 from ...ptypes import *
 from ... import instructions
+from c2p.source_interval import SourceInterval
 
 from .node_base import *
 
 Expression = Any  # of the following:
 class Comma(ASTNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        super().__init__(where)
         self.left = left
         self.right = right
 
@@ -46,7 +48,8 @@ class Comma(ASTNode):
 
 
 class OperationAssignment(ASTNode):
-    def __init__(self, left: Expression, right: Expression, operation : Optional[Any]) -> None:
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression, operation : Optional[Any]) -> None:
+        super().__init__(where)
         self.left = left
         self.right = right
         self.operation = operation
@@ -71,7 +74,7 @@ class OperationAssignment(ASTNode):
 
         # TODO: type compatibility & implicit casting logic!
         if(cl.type != cr.type.ignoreConst()):
-            raise SemanticError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
+            self.semanticError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
 
         # Apply the operation (if any)
         if self.operation:
@@ -89,27 +92,28 @@ class OperationAssignment(ASTNode):
         return code
 
 class Assignment(OperationAssignment):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        OperationAssignment.__init__(self, left, right, None)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        OperationAssignment.__init__(self, where, left, right, None)
 
 class AddAssignment(OperationAssignment):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        OperationAssignment.__init__(self, left, right, instructions.Add)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        OperationAssignment.__init__(self, where, left, right, instructions.Add)
 
 class SubAssignment(OperationAssignment):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        OperationAssignment.__init__(self, left, right, instructions.Sub)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        OperationAssignment.__init__(self, where, left, right, instructions.Sub)
 
 class MulAssignment(OperationAssignment):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        OperationAssignment.__init__(self, left, right, instructions.Mul)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        OperationAssignment.__init__(self, where, left, right, instructions.Mul)
 
 class DivAssignment(OperationAssignment):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        OperationAssignment.__init__(self, left, right, instructions.Div)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        OperationAssignment.__init__(self, where, left, right, instructions.Div)
 
 class TernaryIf(ASTNode):
-    def __init__(self, condition: Expression, left: Expression, right: Expression) -> None:
+    def __init__(self, where: SourceInterval, condition: Expression, left: Expression, right: Expression) -> None:
+        super().__init__(where)
         self.condition = condition
         self.left = left
         self.right = right
@@ -123,13 +127,13 @@ class TernaryIf(ASTNode):
 
         # TODO: type equivalence
         if cl.type.ignoreConst() != cr.type.ignoreConst():
-            raise SemanticError('Invalid ternary expression of both types {} and {}'.format(cl.type, cr.type))
+            self.semanticError('Invalid ternary expression of both types {} and {}'.format(cl.type, cr.type))
 
         code.type = cl.type.ignoreConst()
 
         if cc.type.ignoreConst() != CBool():
             # TODO: boolean conversion
-            raise SemanticError('Invalid boolean expression of type {}'.format(cc.type))
+            self.semanticError('Invalid boolean expression of type {}'.format(cc.type))
 
         # Make labels (the Label class ensures the labels are unique)
         falseLabel = instructions.Label('ternfalse')
@@ -155,7 +159,8 @@ class TernaryIf(ASTNode):
 
 class BinaryBooleanOperationNode(ASTNode):
     '''A Node representing a binary operation between two boolean expressions.'''
-    def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression, operation : Any) -> None:
+        super().__init__(where)
         self.left = left
         self.right = right
         self.operation = operation
@@ -172,7 +177,7 @@ class BinaryBooleanOperationNode(ASTNode):
         # TODO: boolean conversions.
         for c in (cl, cr):
             if(c.type.ignoreConst() != CBool()):
-                raise SemanticError('Attempted to use variable of type {} as a boolean.'.format(cl.type))
+                self.semanticError('Attempted to use variable of type {} as a boolean.'.format(cl.type))
 
         code.add(self.operation())
 
@@ -182,17 +187,18 @@ class BinaryBooleanOperationNode(ASTNode):
         return code
 
 class LogicalOr(BinaryBooleanOperationNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        BinaryBooleanOperationNode.__init__(self, left, right, instructions.Or)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        BinaryBooleanOperationNode.__init__(self, where, left, right, instructions.Or)
 
 class LogicalAnd(BinaryBooleanOperationNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        BinaryBooleanOperationNode.__init__(self, left, right, instructions.And)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        BinaryBooleanOperationNode.__init__(self, where, left, right, instructions.And)
 
 
 class ComparisonNode(ASTNode):
     '''A Node representing a boolean comparison between two expressions of a numeric type.'''
-    def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression, operation : Any) -> None:
+        super().__init__(where)
         self.left = left
         self.right = right
         self.operation = operation
@@ -207,7 +213,7 @@ class ComparisonNode(ASTNode):
 
         # TODO: type compatibility & implicit casting logic!
         if(cl.type.ignoreConst() != cr.type.ignoreConst()):
-            raise SemanticError('Invalid comparison {} between values of type of {} and {}.'.format(self.operation.__name__, cr.type, cl.type))
+            self.semanticError('Invalid comparison {} between values of type of {} and {}.'.format(self.operation.__name__, cr.type, cl.type))
 
         code.add(self.operation(cl.type.ptype()))
 
@@ -217,33 +223,34 @@ class ComparisonNode(ASTNode):
         return code
 
 class Equals(ComparisonNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        ComparisonNode.__init__(self, left, right, instructions.Equ)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, where, left, right, instructions.Equ)
 
 class NotEquals(ComparisonNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        ComparisonNode.__init__(self, left, right, instructions.Neq)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, where, left, right, instructions.Neq)
 
 class LessThan(ComparisonNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        ComparisonNode.__init__(self, left, right, instructions.Les)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, where, left, right, instructions.Les)
 
 class GreaterThan(ComparisonNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        ComparisonNode.__init__(self, left, right, instructions.Grt)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, where, left, right, instructions.Grt)
 
 class LessThanEquals(ComparisonNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        ComparisonNode.__init__(self, left, right, instructions.Leq)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, where, left, right, instructions.Leq)
 
 class GreaterThanEquals(ComparisonNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        ComparisonNode.__init__(self, left, right, instructions.Geq)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        ComparisonNode.__init__(self, where, left, right, instructions.Geq)
 
-        
+
 class BinaryNumericOperationNode(ASTNode):
     '''A Node representing a numeric expression between two numeric expressions.'''
-    def __init__(self, left: Expression, right: Expression, operation : Any) -> None:
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression, operation : Any) -> None:
+        super().__init__(where)
         self.left = left
         self.right = right
         self.operation = operation
@@ -258,7 +265,7 @@ class BinaryNumericOperationNode(ASTNode):
 
         # TODO: type compatibility & implicit casting logic!
         if(cl.type.ignoreConst() != cr.type.ignoreConst()):
-            raise SemanticError('Invalid operation {} between values of type of {} to {}.'.format(self.operation.__name__, cr.type, cl.type))
+            self.semanticError('Invalid operation {} between values of type of {} to {}.'.format(self.operation.__name__, cr.type, cl.type))
 
         code.add(self.operation(cl.type.ptype()))
 
@@ -268,24 +275,25 @@ class BinaryNumericOperationNode(ASTNode):
         return code
 
 class Add(BinaryNumericOperationNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        BinaryNumericOperationNode.__init__(self, left, right, instructions.Add)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        BinaryNumericOperationNode.__init__(self, where, left, right, instructions.Add)
 
 class Subtract(BinaryNumericOperationNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        BinaryNumericOperationNode.__init__(self, left, right, instructions.Sub)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        BinaryNumericOperationNode.__init__(self, where, left, right, instructions.Sub)
 
 class Multiply(BinaryNumericOperationNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        BinaryNumericOperationNode.__init__(self, left, right, instructions.Mul)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        BinaryNumericOperationNode.__init__(self, where, left, right, instructions.Mul)
 
 class Divide(BinaryNumericOperationNode):
-    def __init__(self, left: Expression, right: Expression) -> None:
-        BinaryNumericOperationNode.__init__(self, left, right, instructions.Div)
+    def __init__(self, where: SourceInterval, left: Expression, right: Expression) -> None:
+        BinaryNumericOperationNode.__init__(self, where, left, right, instructions.Div)
 
 
 class Cast(ASTNode):
-    def __init__(self, type: CType, right: Expression) -> None:
+    def __init__(self, where: SourceInterval, type: CType, right: Expression) -> None:
+        super().__init__(where)
         self.type = type
         self.right = right
 
@@ -305,7 +313,8 @@ class Cast(ASTNode):
 
 class PrefixNode(ASTNode):
     '''Node representing a prefix increment/decrement.'''
-    def __init__(self, inner: Expression, operation : Any) -> None:
+    def __init__(self, where: SourceInterval, inner: Expression, operation : Any) -> None:
+        super().__init__(where)
         self.inner = inner
         self.operation = operation
 
@@ -336,17 +345,18 @@ class PrefixNode(ASTNode):
         return code
 
 class PrefixIncrement(PrefixNode):
-    def __init__(self, inner: Expression) -> None:
-        PrefixNode.__init__(self, inner, instructions.Inc)
+    def __init__(self, where: SourceInterval, inner: Expression) -> None:
+        PrefixNode.__init__(self, where, inner, instructions.Inc)
 
 class PrefixDecrement(PrefixNode):
-    def __init__(self, inner: Expression) -> None:
-        PrefixNode.__init__(self, inner, instructions.Dec)
+    def __init__(self, where: SourceInterval, inner: Expression) -> None:
+        PrefixNode.__init__(self, where, inner, instructions.Dec)
 
 
 class PostfixNode(ASTNode):
     '''Node representing a postfix increment/decrement.'''
-    def __init__(self, inner: Expression, operation : Any) -> None:
+    def __init__(self, where: SourceInterval, inner: Expression, operation : Any) -> None:
+        super().__init__(where)
         self.inner = inner
         self.operation = operation
 
@@ -388,16 +398,17 @@ class PostfixNode(ASTNode):
         return code
 
 class PostfixIncrement(PostfixNode):
-    def __init__(self, inner: Expression) -> None:
-        PostfixNode.__init__(self, inner, instructions.Inc)
+    def __init__(self, where: SourceInterval, inner: Expression) -> None:
+        PostfixNode.__init__(self, where, inner, instructions.Inc)
 
 class PostfixDecrement(PostfixNode):
-    def __init__(self, inner: Expression) -> None:
-        PostfixNode.__init__(self, inner, instructions.Dec)
+    def __init__(self, where: SourceInterval, inner: Expression) -> None:
+        PostfixNode.__init__(self, where, inner, instructions.Dec)
 
 
 class AddressOf(ASTNode):
-    def __init__(self, inner: Expression) -> None:
+    def __init__(self, where: SourceInterval, inner: Expression) -> None:
+        super().__init__(where)
         self.inner = inner
 
     def to_code(self, env: Environment) -> CodeNode:
@@ -414,7 +425,8 @@ class AddressOf(ASTNode):
         return code
 
 class Dereference(ASTNode):
-    def __init__(self, inner: Expression) -> None:
+    def __init__(self, where: SourceInterval, inner: Expression) -> None:
+        super().__init__(where)
         self.inner = inner
 
     def to_code(self, env: Environment) -> CodeNode:
@@ -427,7 +439,7 @@ class Dereference(ASTNode):
             # the type of this expression is the type that's being pointed at (CPointer.t)
             code.type = c.type.t
         else:
-            raise SemanticError('Expression of type {} cannot be dereferenced.'.format(c.type))
+            self.semanticError('Expression of type {} cannot be dereferenced.'.format(c.type))
 
         code.add(c)
         code.add(instructions.Ind(c.type.t.ptype()))
@@ -447,7 +459,7 @@ class Dereference(ASTNode):
             # the type of this expression is the type that's being pointed at (CPointer.t)
             code.type = c.type.t
         else:
-            raise SemanticError('Expression of type {} cannot be dereferenced into an L-Value.'.format(c.type))
+            self.semanticError('Expression of type {} cannot be dereferenced into an L-Value.'.format(c.type))
 
         # We don't need to add any instructions, because of how assignment instructions work.
         code.maxStackSpace = c.maxStackSpace
@@ -456,7 +468,8 @@ class Dereference(ASTNode):
 
 
 class LogicalNot(ASTNode):
-    def __init__(self, inner: Expression) -> None:
+    def __init__(self, where: SourceInterval, inner: Expression) -> None:
+        super().__init__(where)
         self.inner = inner
 
     def to_code(self, env: Environment) -> CodeNode:
@@ -467,7 +480,7 @@ class LogicalNot(ASTNode):
 
         # TODO: bool conversion
         if c.type.ignoreConst() != CBool():
-            raise SemanticError('Logical negation on expression of type {}, expected bool.'.format(c.type))
+            self.semanticError('Logical negation on expression of type {}, expected bool.'.format(c.type))
 
         code.add(instructions.Not())
 
@@ -477,7 +490,8 @@ class LogicalNot(ASTNode):
         return code
 
 class Negate(ASTNode):
-    def __init__(self, inner: Expression) -> None:
+    def __init__(self, where: SourceInterval, inner: Expression) -> None:
+        super().__init__(where)
         self.inner = inner
 
     def to_code(self, env: Environment) -> CodeNode:
@@ -487,7 +501,7 @@ class Negate(ASTNode):
         code.add(c)
 
         if not isinstance(c.type.ignoreConst(), (CFloat, CInt)):
-            raise SemanticError('Negation on expression of type {}, expected numeric.'.format(c.type))
+            self.semanticError('Negation on expression of type {}, expected numeric.'.format(c.type))
 
         code.add(instructions.Neg(c.type.ptype()))
 
@@ -497,7 +511,8 @@ class Negate(ASTNode):
         return code
 
 class Index(ASTNode):
-    def __init__(self, array: Expression, index: Expression) -> None:
+    def __init__(self, where: SourceInterval, array: Expression, index: Expression) -> None:
+        super().__init__(where)
         self.array = array
         self.index = index
 
@@ -509,7 +524,7 @@ class Index(ASTNode):
 
         # Ensure the array is indexable
         if not isinstance(ca.type, (CPointer, CArray)):
-            raise SemanticError('Expression of type {} cannot be indexed.'.format(ca.type))
+            self.semanticError('Expression of type {} cannot be indexed.'.format(ca.type))
 
         # The type of the items in the array (may itself be an array)
         itemType = ca.type.t
@@ -517,7 +532,7 @@ class Index(ASTNode):
         # The index
         ci = self.index.to_code(env)
         if ci.type.ignoreConst() != CInt():
-            raise SemanticError('Cannot use expression of type {} as index.'.format(ci.type))
+            self.semanticError('Cannot use expression of type {} as index.'.format(ci.type))
 
         # Load array and index onto stack
         code.add(ca)
@@ -540,15 +555,15 @@ class Index(ASTNode):
 
         # Ensure the array is indexable and is also const-free
         if not isinstance(ca.type, (CPointer, CArray)) or ca.type.ignoreConst() != ca.type:
-            raise SemanticError('Expression of type {} cannot be indexed into an L-Value.'.format(ca.type))
-        
+            self.semanticError('Expression of type {} cannot be indexed into an L-Value.'.format(ca.type))
+
         # The type of the items in the array (may itself be an array)
         itemType = ca.type.t
 
         # The index
         ci = self.index.to_code(env)
         if ci.type.ignoreConst() != CInt():
-            raise SemanticError('Cannot use expression of type {} as index.'.format(ci.type))
+            self.semanticError('Cannot use expression of type {} as index.'.format(ci.type))
 
         # Load array and index onto stack
         code.add(ca)
@@ -563,14 +578,15 @@ class Index(ASTNode):
         return code
 
 class Call(ASTNode):
-    def __init__(self, name: Expression, arguments: List[Expression]) -> None:
+    def __init__(self, where: SourceInterval, name: Expression, arguments: List[Expression]) -> None:
+        super().__init__(where)
         self.name = name
         self.arguments = arguments
 
     def to_code(self, env: Environment) -> CodeNode:
         if isinstance(self.name, IdentifierExpression) and self.name.identifier.name == 'printf':
             return printf.to_code(self.arguments, env)
-        
+
         code = CodeNode()
 
         # Mark the new frame
@@ -578,14 +594,14 @@ class Call(ASTNode):
 
         # Identify the called function (if it exists)
         if not isinstance(self.name, IdentifierExpression):
-            raise SemanticError('Call to non-identifier.')
+            self.semanticError('Call to non-identifier.')
 
         name = self.name.identifier.name
-        returnType, signature, label = env.get_function(name)
+        returnType, signature, label = env.get_function(name, self.where)
 
         # Verify the number of arguments
         if len(signature) != len (self.arguments):
-            raise SemanticError('Invalid call to "{}": Expected {} arguments, got {}.' \
+            self.semanticError('Invalid call to "{}": Expected {} arguments, got {}.' \
                 .format(name, len(signature), len(self.arguments)))
 
         # Load the arguments onto the stack and verify their types
@@ -596,9 +612,9 @@ class Call(ASTNode):
 
             # TODO: Type compatibility
             if c.type.ignoreConst() != sig.ignoreConst():
-                raise SemanticError('Invalid call to "{}": Expected expression of type {}, got {}.' \
+                self.semanticError('Invalid call to "{}": Expected expression of type {}, got {}.' \
                     .format(name, sig, c.type))
-        
+
         argSize = sum([s.ptype().size() for s in signature])
 
         # Make the call
@@ -614,7 +630,8 @@ class Call(ASTNode):
         return code
 
 class Constant(ASTNode):
-    def __init__(self, type: CConst, value: Any) -> None:
+    def __init__(self, where: SourceInterval, type: CConst, value: Any) -> None:
+        super().__init__(where)
         self.type = type
         self.value = value
 
@@ -638,13 +655,14 @@ class Constant(ASTNode):
         return code
 
 class IdentifierExpression(ASTNode):
-    def __init__(self, identifier: Identifier) -> None:
+    def __init__(self, where: SourceInterval, identifier: Identifier) -> None:
+        super().__init__(where)
         self.identifier = identifier
 
     def to_code(self, env: Environment) -> CodeNode:
         code = CodeNode()
 
-        var = env.get_variable(self.identifier.name)
+        var = env.get_variable(self.identifier.name, self.where)
 
         code.add(instructions.Lod(var.ptype, 0 if not var.isGlobal else 1, var.address))
         code.type = var.ctype
@@ -656,7 +674,7 @@ class IdentifierExpression(ASTNode):
     def to_lcode(self, env: Environment) -> CodeNode:
         code = CodeNode()
 
-        var = env.get_variable(self.identifier.name)
+        var = env.get_variable(self.identifier.name, self.where)
 
         code.add(instructions.Lda(0 if not var.isGlobal else 1 , var.address))
 

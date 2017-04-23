@@ -2,25 +2,34 @@ from typing import Optional, Any
 from ..ctypes import CVoid
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
-from ...codegen.semantic_error import SemanticError
+from ...codegen.error import SemanticError
 from ... import instructions
+from c2p.source_interval import SourceInterval
 
 class ASTNode:
+    def __init__(self, where: SourceInterval) -> None:
+        self.where = where
+
     def to_code(self, env: Environment) -> CodeNode:
         raise NotImplementedError()
 
     def to_lcode(self, env: Environment) -> CodeNode:
-        raise SemanticError('{} is not a valid L-Value expression.'.format(self.__class__.__name__))
+        self.semanticError('{} is not a valid L-Value expression.'.format(self.__class__.__name__))
+
+    def semanticError(self, message: Any) -> None:
+        raise SemanticError(message, self.where)
 
 
 class Identifier(ASTNode):
-    def __init__(self, name: str) -> None:
+    def __init__(self, where: SourceInterval, name: str) -> None:
+        super().__init__(where)
         self.name = name
 
 Expression = Any
 
 class ExprStatement(ASTNode):
-    def __init__(self, expression: Optional[Expression]) -> None:
+    def __init__(self, where: SourceInterval, expression: Optional[Expression]) -> None:
+        super().__init__(where)
         self.expression = expression
 
     def to_code(self, env: Environment) -> CodeNode:
