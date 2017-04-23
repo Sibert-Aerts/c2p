@@ -601,8 +601,8 @@ class Call(ASTNode):
 
         # Verify the number of arguments
         if len(signature) != len (self.arguments):
-            raise self.semanticError('Invalid call to "{}": Expected {} arguments, got {}.' \
-                .format(name, len(signature), len(self.arguments)))
+            raise self.semanticError('Invalid call to "{}": Expected {} argument{}, got {}.' \
+                .format(name, len(signature), '' if len(signature) == 1 else 's', len(self.arguments)))
 
         # Load the arguments onto the stack and verify their types
         for sig, arg in zip(signature, self.arguments):    # sig:CType, arg:Expression
