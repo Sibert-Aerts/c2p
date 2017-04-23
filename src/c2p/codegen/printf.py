@@ -1,12 +1,13 @@
 from typing import Any, List
 from .environment import Environment
 from .code_node import CodeNode
-from .semantic_error import SemanticError
+from .error import SemanticError
 from ..grammar.ctypes import *
 from ..instructions import *
+from c2p.source_interval import SourceInterval
 
 Expression = Any
-def to_code(arguments: List[Expression], env: Environment):
+def to_code(arguments: List[Expression], env: Environment, where: SourceInterval):
     # TODO: actually make this thing print more than strings
     # important: this has to happen in C code? unsure.
 
@@ -14,7 +15,7 @@ def to_code(arguments: List[Expression], env: Environment):
 
     cs = string.to_code(env)
     if cs.type.ignoreConst() != CArray(CChar()):
-        SemanticError('Invalid call to "printf" with argument of type {}, expected {}.'.format(cs.type, CArray(CChar())))
+        raise SemanticError('Invalid call to "printf" with argument of type {}, expected {}.'.format(cs.type, CArray(CChar())), where)
 
     # Load the string's address onto the stack
 

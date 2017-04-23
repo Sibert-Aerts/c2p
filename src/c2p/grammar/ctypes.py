@@ -28,20 +28,20 @@ class CType:
         # Used for array indexing
         return 1
 
-    def __repr__(self):
+    def __str__(self):
         raise NotImplementedError()
 
     def ignoreConst(self):
         return self
 
 class CVoid(CType):
-    def ptype(self) -> PType:
-        raise SemanticError('void has no PType!')
+    def ptype(self) -> Any:
+        raise Exception('void has no PType!')
 
     def default(self) -> Any:
-        raise SemanticError('void has no default value!')
+        raise Exception('void has no default value!')
 
-    def __repr__(self):
+    def __str__(self):
         return 'void'
 
 
@@ -52,7 +52,7 @@ class CChar(CType):
     def default(self) -> Any:
         return '\\0'
 
-    def __repr__(self):
+    def __str__(self):
         return 'char'
 
 
@@ -63,7 +63,7 @@ class CBool(CType):
     def default(self) -> Any:
         return False
 
-    def __repr__(self):
+    def __str__(self):
         return 'bool'
 
 
@@ -74,7 +74,7 @@ class CInt(CType):
     def default(self) -> Any:
         return 0
 
-    def __repr__(self):
+    def __str__(self):
         return 'int'
 
 
@@ -85,7 +85,7 @@ class CFloat(CType):
     def default(self) -> Any:
         return 0.0
 
-    def __repr__(self):
+    def __str__(self):
         return 'float'
 
 
@@ -94,8 +94,8 @@ class CLayerType(CType):
         super().__init__()
         self.t = t
 
-    def __repr__(self):
-        return '{0}({1})'.format(self.__class__.__name__, self.t.__repr__())
+    def __str__(self):
+        return '{0}({1})'.format(self.__class__.__name__, self.t.__str__())
 
     def ignoreConst(self):
         return self.__class__(self.t.ignoreConst())
@@ -107,22 +107,18 @@ class CPointer(CLayerType):
     def default(self) -> Any:
         return 0
 
-    def __repr__(self):
-        return self.t.__repr__() + '*'
+    def __str__(self):
+        return self.t.__str__() + '*'
 
 class CArray(CLayerType):
     def __init__(self, t: CType, length=None) -> None:
         super().__init__(t)
         self.length = length    # Type: int
 
-    def __repr__(self):
-        return '{}[{}]({})'.format(self.__class__.__name__, self.length, self.t.__repr__())
-
     def size(self) -> int:
-        if self.length:
-            return self.length * self.t.size()
-        else:
-            raise SemanticError('Attempted to get length of array with non-specified length.')
+        if self.length is None:
+            raise Exception('Attempted to get length of array with non-specified length.')
+        return self.length * self.t.size()
 
     def ptype(self) -> PType:
         return PAddress
@@ -130,8 +126,8 @@ class CArray(CLayerType):
     def default(self) -> Any:
         return 0
 
-    def __repr__(self):
-        return self.t.__repr__() + '[' + (self.lenght if self.length else '') + ']'
+    def __str__(self):
+        return str(self.t) + '[' + ('' if self.length is None else '') + ']'
 
 class CConst(CLayerType):
     def ptype(self) -> PType:
@@ -143,10 +139,11 @@ class CConst(CLayerType):
     def default(self) -> Any:
         return self.t.default()
 
-    def __repr__(self):
+    def __str__(self):
+        # TODO I am almost 100% certain this is wrong
         if isinstance(self.t, CPointer):
-            return self.t.t.__repr__() + '* const'
+            return self.t.t.__str__() + '* const'
         else:
-            return 'const ' + self.t.__repr__()
+            return 'const ' + self.t.__str__()
 
 fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar(), 'bool' : CBool()}

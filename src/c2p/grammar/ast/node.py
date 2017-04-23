@@ -5,6 +5,7 @@ from ...codegen.code_node import CodeNode
 from ...codegen import printf
 from ...ptypes import PAddress
 from ... import instructions
+from c2p.source_interval import SourceInterval
 # from ..ptypes import PType, PAddress, PBoolean, PCharacter, PInteger, PReal
 
 # Code is split up over these files:
@@ -15,7 +16,8 @@ from .node_statement import *
 
 # this is still a bit funky, because the declarator and type go together
 class ParameterDeclaration(ASTNode):
-    def __init__(self, type: CType, declarator: Declarator) -> None:
+    def __init__(self, where: SourceInterval, type: CType, declarator: Declarator) -> None:
+        super().__init__(where)
         self.type = type
         self.declarator = declarator
 
@@ -27,7 +29,8 @@ class ParameterDeclaration(ASTNode):
 
 
 class FunctionDefinition(ASTNode):
-    def __init__(self, name: str, returnType: CType, parameters: List[ParameterDeclaration], body: CompoundStatement) -> None:
+    def __init__(self, where: SourceInterval, name: str, returnType: CType, parameters: List[ParameterDeclaration], body: CompoundStatement) -> None:
+        super().__init__(where)
         self.name = name
         self.returnType = returnType
         self.parameters = parameters
@@ -50,7 +53,7 @@ class FunctionDefinition(ASTNode):
         for t in signature:
             paramSpace += t.ptype().size()
 
-        label = env.register_function(name, returnType, signature)
+        label = env.register_function(name, returnType, signature, self.where)
 
         # Append the label pointing to this function
         code.add(label)
@@ -62,7 +65,7 @@ class FunctionDefinition(ASTNode):
 
         # Register all the function arguments to the new scope
         for p in parameters:
-            env.register_variable(p[1], p[0])
+            env.register_variable(p[1], p[0], self.where)
 
         # Generate the body's code in the new scope
         bodyc = blockstmt_to_code(self.body, env)
@@ -89,7 +92,8 @@ class FunctionDefinition(ASTNode):
         return code
 
 class Program(ASTNode):
-    def __init__(self, declarations: List[Union[FunctionDefinition, Declaration]]) -> None:
+    def __init__(self, where: SourceInterval, declarations: List[Union[FunctionDefinition, Declaration]]) -> None:
+        super().__init__(where)
         self.declarations = declarations
 
     def to_code(self, env: Environment) -> CodeNode:
@@ -126,6 +130,6 @@ class Program(ASTNode):
         code.add(functionCode)
 
         if not code.foundMain:
-            raise SemanticError('No \'main\' function found.')
+            raise self.semanticError('No \'main\' function found.')
 
         return code

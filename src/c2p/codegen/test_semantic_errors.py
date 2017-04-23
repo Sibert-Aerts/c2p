@@ -9,7 +9,7 @@ from c2p.grammar.antlr.SmallCParser import SmallCParser
 from c2p.grammar.ast.visitor import ASTVisitor
 from c2p.grammar.ast.visualize import Visualizer
 from .environment import Environment
-from .semantic_error import SemanticError
+from .error import SemanticError
 
 filepath = os.path.dirname(__file__) + "/../../test/wrong/"
 
@@ -64,7 +64,7 @@ class TestSemanticErrors(unittest.TestCase):
         self.assertTrue(_test('undefined_var.c', 'Use of undefined variable "x"'))
 
     def test_missing_args(self):
-        self.assertTrue(_test('missing_args.c', 'Invalid call to "func": Expected 1 arguments, got 0.'))
+        self.assertTrue(_test('missing_args.c', 'Invalid call to "func": Expected 1 argument, got 0.'))
 
     def test_too_many_args(self):
         self.assertTrue(_test('too_many_args.c', 'Invalid call to "func": Expected 0 arguments, got 1.'))
