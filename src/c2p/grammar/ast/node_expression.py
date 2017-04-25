@@ -590,7 +590,7 @@ class Call(ASTNode):
         code = CodeNode()
 
         # Mark the new frame
-        code.add(instructions.Mst(0))
+        code.add(instructions.Mst(1))
 
         # Identify the called function (if it exists)
         if not isinstance(self.name, IdentifierExpression):
