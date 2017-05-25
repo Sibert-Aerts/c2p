@@ -2,6 +2,11 @@ init
 {
     template RunTest<filename>
     {
+        // run
+        // {
+        //     return = @($run-exe);
+        // }
+
         build
         {
             _ = @($compiler $(filename).c);
