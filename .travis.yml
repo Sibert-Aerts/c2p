@@ -2,7 +2,7 @@ language: csharp
 
 script:
     - sudo apt install python3
-    - pip3 install mypy antlr4-python3-runtime
+    - python3 -m pip install mypy antlr4-python3-runtime
     - wget https://github.com/jonathanvdc/compare-test/releases/download/v0.1.4/compare-test.zip
     - mkdir compare-test
     - unzip compare-test.zip -d compare-test
