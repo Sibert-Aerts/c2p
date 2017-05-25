@@ -50,7 +50,7 @@ class CChar(CType):
         return PCharacter
 
     def default(self) -> Any:
-        return '\\0'
+        return '\0'
 
     def __str__(self):
         return 'char'

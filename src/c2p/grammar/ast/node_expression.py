@@ -646,7 +646,7 @@ class Constant(ASTNode):
             val = env.add_string_literal(val)
 
         if self.type == CConst(CChar()):
-            code.add(instructions.Ldc(code.type.ptype(), "'{}'".format(val)))
+            code.add(instructions.Ldc(code.type.ptype(), ord(val)))
         else:
             code.add(instructions.Ldc(code.type.ptype(), val))
 

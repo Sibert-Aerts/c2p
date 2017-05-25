@@ -11,7 +11,7 @@ import re
 Expression = Any
 
 def string_print_loop(node: CodeNode):
-    assert node.type.ignoreConst() == CArray(CChar())
+    assert node.type.ignoreConst() == CArray(CChar()) or node.type.ignoreConst() == CPointer(CChar())
     loop_label = Label('printf_loop')
     done_label = Label('printf_done')
 
@@ -58,10 +58,10 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
     assert isinstance(fmt, str)
 
     # Tokenize format string.
-    tokens = re.findall('%%|%s|%d|.', fmt, flags=re.DOTALL)
+    tokens = re.findall('%%|%s|%d|%f|%c|.', fmt, flags=re.DOTALL)
 
     # Check argument count.
-    expected = 1 + tokens.count('%s') + tokens.count('%d')
+    expected = 1 + tokens.count('%s') + tokens.count('%d') + tokens.count('%f') + tokens.count('%c')
     given = len(arguments)
     if expected != given:
         raise SemanticError('printf expects {} argument{} here; given {}.'.format(expected, '' if expected == 1 else 's', given), where)
@@ -74,7 +74,7 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
     for token in tokens:
         if token == '%s':
             node = arguments[i].to_code(env)
-            if node.type.ignoreConst() != CArray(CChar()):
+            if node.type.ignoreConst() != CArray(CChar()) and node.type.ignoreConst() != CPointer(CChar()):
                 raise SemanticError('%s matched up with non-string in printf.', where)
             code.add(string_print_loop(node))
             i += 1
@@ -84,6 +84,20 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
                 raise SemanticError('%d matched up with non-integer in printf.', where)
             code.add(node)
             code.add(Out1(PInteger))
+            i += 1
+        elif token == '%f':
+            node = arguments[i].to_code(env)
+            if node.type.ignoreConst() != CFloat():
+                raise SemanticError('%d matched up with non-float in printf.', where)
+            code.add(node)
+            code.add(Out1(PReal))
+            i += 1
+        elif token == '%c':
+            node = arguments[i].to_code(env)
+            if node.type.ignoreConst() != CChar():
+                raise SemanticError('%d matched up with non-character in printf.', where)
+            code.add(node)
+            code.add(Out1(PCharacter))
             i += 1
         else:
             code.add(Ldc(PCharacter, ord(token[:1])))
