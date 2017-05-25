@@ -31,5 +31,5 @@ init
 
 tests
 {
-    arithmetic/arithmetic.test;
+    template RunTest<arithmetic>;
 }
