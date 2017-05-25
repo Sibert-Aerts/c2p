@@ -116,7 +116,7 @@ def serializedATN():
         buf.write("\u00ec\u00ee\5,\27\2\u00ed\u00ea\3\2\2\2\u00ee\u00f1\3")
         buf.write("\2\2\2\u00ef\u00ed\3\2\2\2\u00ef\u00f0\3\2\2\2\u00f0+")
         buf.write("\3\2\2\2\u00f1\u00ef\3\2\2\2\u00f2\u00f3\5> \2\u00f3\u00f4")
-        buf.write("\5F$\2\u00f4\u00f5\5*\26\2\u00f5\u00f8\3\2\2\2\u00f6\u00f8")
+        buf.write("\5F$\2\u00f4\u00f5\5,\27\2\u00f5\u00f8\3\2\2\2\u00f6\u00f8")
         buf.write("\5.\30\2\u00f7\u00f2\3\2\2\2\u00f7\u00f6\3\2\2\2\u00f8")
         buf.write("-\3\2\2\2\u00f9\u0101\5\60\31\2\u00fa\u00fb\5\60\31\2")
         buf.write("\u00fb\u00fc\7\33\2\2\u00fc\u00fd\5*\26\2\u00fd\u00fe")
@@ -1790,8 +1790,8 @@ class SmallCParser ( Parser ):
             return self.getTypedRuleContext(SmallCParser.AssignmentOperatorContext,0)
 
 
-        def expression(self):
-            return self.getTypedRuleContext(SmallCParser.ExpressionContext,0)
+        def assignment(self):
+            return self.getTypedRuleContext(SmallCParser.AssignmentContext,0)
 
 
         def condition(self):
@@ -1833,7 +1833,7 @@ class SmallCParser ( Parser ):
                 self.state = 241
                 self.assignmentOperator()
                 self.state = 242
-                self.expression(0)
+                self.assignment()
                 pass
 
             elif la_ == 2:

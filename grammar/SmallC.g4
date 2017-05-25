@@ -29,7 +29,7 @@ pointer: ('*' 'const'?)*;
 
 // Expressions
 expression: assignment | expression ',' assignment;
-assignment: unary assignmentOperator expression | condition;
+assignment: unary assignmentOperator assignment | condition;
 condition: disjunction | disjunction '?' expression ':' condition;
 disjunction: conjunction | disjunction '||' conjunction;
 conjunction: comparison | conjunction '&&' comparison;
