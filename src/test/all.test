@@ -1,0 +1,30 @@
+init
+{
+    template RunTest<filename>
+    {
+        build
+        {
+            _ = @($compiler $(filename).c);
+        }
+
+        configs
+        {
+            c2p
+            {
+                compiler = python3 $(working-directory)/src/main.py;
+                run-exe = $echo okay;
+            }
+
+            gcc
+            {
+                compiler = gcc;
+                run-exe = ./a.out;
+            }
+        }
+    }
+}
+
+tests
+{
+    arithmetic/arithmetic.test;
+}
