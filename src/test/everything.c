@@ -1,5 +1,9 @@
 #include <stdio.h>
 
+// This isn't really a testing file.
+// It's just a big file of syntactically correct code
+// as a very basic test that codegen works on these things at all.
+
 int global_x;
 
 void set_global_x(int x){
@@ -75,7 +79,7 @@ int main(){
     }
 
     const char text[] = "abcdefg";
-    printf(text);
+    printf("%s", text);
 }
 
 

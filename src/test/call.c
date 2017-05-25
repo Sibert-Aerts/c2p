@@ -1,5 +1,24 @@
 #include <stdio.h>
 
+// Testing
+
+int errorCount;
+
+void assertEq(int x, int y){
+    if(x == y) return;
+    errorCount++;
+    printf("ASSERTION FAILED: %d does not equal %d\n", x, y);
+}
+
+void endTest(){
+    if(errorCount > 0)
+        printf("TEST FAILED: Encountered %d assertion error%s!", errorCount, errorCount==1?"":"s");
+    else
+        printf("TEST SUCCESSFUL: No assertion errors encountered!");
+}
+
+// Functions
+
 void method(){
     int x = 10;
     int y = 20;
@@ -42,4 +61,11 @@ int main(){
     int c = function(a);                    // c = 200
     int d = mul(square(ten(ten(7))), 2);    // d = 980000
     int e = sum(10, 20, 30, 40, 50, 60);    // e = 210
+    
+    assertEq(a, 10);
+    assertEq(b, 200);
+    assertEq(c, 200);
+    assertEq(d, 980000);
+    assertEq(e, 210);
+    endTest();
 }

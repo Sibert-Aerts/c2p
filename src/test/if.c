@@ -27,9 +27,9 @@ char* compare(int a, int b){
 }
 
 int main(){
-    printf(compare(20, 30));    // out: a is smaller than b
-    printf(compare(30, 20));    // out: a is larger than b
-    printf(compare(20, 20));    // out: a and b are equal
+    printf("%s", compare(20, 30));    // out: a is smaller than b
+    printf("%s", compare(30, 20));    // out: a is larger than b
+    printf("%s", compare(20, 20));    // out: a and b are equal
             
     // out: 10 is positive
     if(isPositive(10))
