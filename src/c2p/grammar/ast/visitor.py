@@ -4,7 +4,14 @@ from .node import *
 from ..ctypes import *
 from ...util import Impossible
 from ast import literal_eval
+from ...codegen.error import ASTError
 from c2p.source_interval import SourceLocation, SourceInterval
+
+# Figure out which part of the code the node relates to
+def where(ctx: Any):
+    return SourceInterval(
+        SourceLocation(ctx.start.line, ctx.start.column),
+        SourceLocation(ctx.stop.line, ctx.stop.column + len(ctx.stop.text.split('\n')[0]) - 1))
 
 # Converts a CType and PointerContext into a CType properly wrapped in CPointer and CConst
 def applyPointerAsType(ctype:CType, pointer:SmallCParser.PointerContext) -> CType:
@@ -31,23 +38,6 @@ def applyPointerAsDeclarator(decl:Declarator, pointer:SmallCParser.PointerContex
 
     return decl
 
-
-# TODO: We need to output pretty errors eventually. I think the ctx objects contain
-# line/column numbers and maybe we want a filename from somewhere too? That way we
-# can show the user what part of the code is invalid.
-class ASTError(Exception):
-    '''
-    This error indicates that the source file, while syntactically valid, contains some
-    semantic error that prevents us from parsing a proper AST. Compilation should fail.
-    '''
-    pass
-
-def where(ctx: Any):
-    return SourceInterval(
-        SourceLocation(ctx.start.line, ctx.start.column),
-        SourceLocation(ctx.stop.line, ctx.stop.column + len(ctx.stop.text.split('\n')[0]) - 1))
-
-# ASTError = the user wrote syntactically valid code containing some semantic.
 class ASTVisitor(SmallCVisitor):
 
     # Visit a parse tree produced by SmallCParser#program.
@@ -243,10 +233,10 @@ class ASTVisitor(SmallCVisitor):
             elif theType is None:
                 theType = fromTypeName[spec]
             else:
-                raise ASTError("Too many type specifiers")
+                raise ASTError("Too many type specifiers", where(ctx))
 
         if theType is None:
-            raise ASTError("Missing type specifier")
+            raise ASTError("Missing type specifier", where(ctx))
 
         if isConst:
             return CConst(theType)

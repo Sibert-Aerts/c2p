@@ -4,6 +4,7 @@ from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
 from ...codegen.error import SemanticError
 from ... import instructions
+from ...codegen.error import ASTError
 from c2p.source_interval import SourceInterval
 
 class ASTNode:
@@ -19,10 +20,14 @@ class ASTNode:
     def semanticError(self, message: Any) -> SemanticError:
         return SemanticError(message, self.where)
 
+# A list of all invalid identifiers
+keywords = ["void", "int", "void", "bool", "float", "if", "else", "where", "for", "break", "continue", "return", "const"]
 
 class Identifier(ASTNode):
     def __init__(self, where: SourceInterval, name: str) -> None:
         super().__init__(where)
+        if name in keywords:
+            raise ASTError("Can't use keyword {} as an identifier.".format(name), self.where)
         self.name = name
 
 Expression = Any

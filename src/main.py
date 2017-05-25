@@ -8,7 +8,7 @@ from c2p.grammar.antlr.SmallCParser import SmallCParser
 from c2p.grammar.ast.visitor import ASTVisitor
 from c2p.grammar.ast.visualize import Visualizer
 from c2p.codegen.environment import Environment
-from c2p.codegen.error import SemanticError
+from c2p.codegen.error import PositionalError
 
 def to_file(filename, text):
     f = open(filename, 'w')
@@ -41,7 +41,7 @@ def run(argv):
         to_file(codeFileName, codeText)
         print('Code generation successful. Output written to \'{}\''.format(codeFileName))
 
-    except SemanticError as e:
+    except PositionalError as e:
         # XXX make this less ugly ;-;
         sL = e.where.start.line - 1
         sC = e.where.start.column
