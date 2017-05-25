@@ -3,4 +3,4 @@ language: csharp
 script:
   wget https://github.com/jonathanvdc/compare-test/releases/download/v0.1.4/compare-test.zip
   mkdir compare-test
-  mono compare-test/compare-test.exe src/test/all.test;
+  mono compare-test/compare-test.exe src/test/all.test
