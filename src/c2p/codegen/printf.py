@@ -88,14 +88,14 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
         elif token == '%f':
             node = arguments[i].to_code(env)
             if node.type.ignoreConst() != CFloat():
-                raise SemanticError('%d matched up with non-float in printf.', where)
+                raise SemanticError('%f matched up with non-float in printf.', where)
             code.add(node)
             code.add(Out1(PReal))
             i += 1
         elif token == '%c':
             node = arguments[i].to_code(env)
             if node.type.ignoreConst() != CChar():
-                raise SemanticError('%d matched up with non-character in printf.', where)
+                raise SemanticError('%c matched up with non-character in printf.', where)
             code.add(node)
             code.add(Out1(PCharacter))
             i += 1
