@@ -1,18 +1,15 @@
 #include <stdio.h>
 
-int errorCount;
+int assertCount, errorCount;
 
 void assertEqb(bool x, bool y){
-    if(x == y) return;
-    errorCount++;
-    printf("ASSERTION FAILED: %s does not equal %s\n", x?"true":"false", y?"true":"false");
+    assertCount++; if(x == y) return; errorCount++;
+    printf("ASSERTION %d FAILED: %s does not equal %s\n", assertCount, x?"true":"false", y?"true":"false");
 }
 
 void endTest(){
-    if(errorCount > 0)
-        printf("TEST FAILED: Encountered %d assertion error%s!", errorCount, errorCount==1?"":"s");
-    else
-        printf("TEST SUCCESSFUL: No assertion errors encountered!");
+    if(errorCount > 0) printf("TEST FAILED: Encountered %d assertion error%s out of %d!", errorCount, errorCount==1?"":"s", assertCount);
+    else printf("TEST SUCCESSFUL: All %d assertions passed!", assertCount);
 }
 
 int main(){
