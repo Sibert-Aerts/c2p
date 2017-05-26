@@ -58,10 +58,10 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
     assert isinstance(fmt, str)
 
     # Tokenize format string.
-    tokens = re.findall('%%|%s|%d|%f|%c|.', fmt, flags=re.DOTALL)
+    tokens = re.findall('%%|%s|%d|%\d*f|%c|.', fmt, flags=re.DOTALL)
 
     # Check argument count.
-    expected = 1 + tokens.count('%s') + tokens.count('%d') + tokens.count('%f') + tokens.count('%c')
+    expected = 1 + len(re.findall('%s|%d|%\d*f|%c', fmt, flags=re.DOTALL))
     given = len(arguments)
     if expected != given:
         raise SemanticError('printf expects {} argument{} here; given {}.'.format(expected, '' if expected == 1 else 's', given), where)
@@ -85,12 +85,16 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
             code.add(node)
             code.add(Out1(PInteger))
             i += 1
-        elif token == '%f':
+        elif token[0] == '%' and token[-1] == 'f':
             node = arguments[i].to_code(env)
             if node.type.ignoreConst() != CFloat():
                 raise SemanticError('%f matched up with non-float in printf.', where)
             code.add(node)
-            code.add(Out1(PReal))
+            if len(token) > 2:
+                code.add(Ldc(PInteger, token[1:-1]))
+                code.add(Out2())
+            else:
+                code.add(Out1(PReal))
             i += 1
         elif token == '%c':
             node = arguments[i].to_code(env)
