@@ -78,8 +78,7 @@ class FunctionDefinition(ASTNode):
         env.returnType = None
 
         # maxVarSpace + 5 because we need to keep the frame header in mind
-        # maxStackSpace + 5 to be safe, or something
-        code.add(instructions.Ent(bodyc.maxStackSpace + 5, maxVarSpace + 5))
+        code.add(instructions.Ent(bodyc.maxStackSpace, maxVarSpace + 5))
         code.add(bodyc)
 
         # Add the implicit return in case of a void function
@@ -115,8 +114,7 @@ class Program(ASTNode):
         # the amount of space global variables take up is just the amount of space all vars in level 0 take up
         varSpace = env.scope.varSpace
         # make space for the global variables + frame header (5) + files! (4)
-        # varspace + 20 to be safe...?
-        code.add(instructions.Ent(varSpace + 20, varSpace + 5 + 4))
+        code.add(instructions.Ent(varSpace, varSpace + 5 + 4))
 
         # First: initialise global variables
         code.add(env.string_literal_code())
