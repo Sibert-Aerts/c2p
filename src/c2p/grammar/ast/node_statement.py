@@ -91,8 +91,8 @@ class ForStatement(ASTNode):
         code = CodeNode()
 
         # The Label class ensures that these are unique
-        startLabel = instructions.Label('whileStart')
-        endLabel = instructions.Label('whileEnd')
+        startLabel = instructions.Label('forStart')
+        endLabel = instructions.Label('forEnd')
 
         # Define this scope as a loop, and tell the code where to jump to
         # in case of a break (end) or continue (start)
