@@ -3,7 +3,7 @@ from ..ctypes import CArray, CConst, CChar, CInt, CFloat, CPointer, CType, CVoid
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
 from ...codegen.error import SemanticError
-from ...codegen import printf
+from ...codegen import printf, scanf
 from ...ptypes import *
 from ... import instructions
 from c2p.source_interval import SourceInterval
@@ -584,8 +584,12 @@ class Call(ASTNode):
         self.arguments = arguments
 
     def to_code(self, env: Environment) -> CodeNode:
-        if isinstance(self.name, IdentifierExpression) and self.name.identifier.name == 'printf':
-            return printf.to_code(self.arguments, env, self.where)
+        # Special-cased, hardcoded library functions.
+        if isinstance(self.name, IdentifierExpression):
+            if self.name.identifier.name == 'printf':
+                return printf.to_code(self.arguments, env, self.where)
+            if self.name.identifier.name == 'scanf':
+                return scanf.to_code(self.arguments, env, self.where)
 
         code = CodeNode()
 

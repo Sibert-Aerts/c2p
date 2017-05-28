@@ -2,7 +2,6 @@ from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CPointer, CType, CVoid, CBool
 from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
-from ...codegen import printf
 from ...ptypes import PAddress
 from ... import instructions
 from c2p.source_interval import SourceInterval
@@ -114,7 +113,8 @@ class Program(ASTNode):
         # the amount of space global variables take up is just the amount of space all vars in level 0 take up
         varSpace = env.scope.varSpace
         # make space for the global variables + frame header (5) + files! (4)
-        code.add(instructions.Ent(varSpace, varSpace + 5 + 4))
+        varSpace += 5 + 4
+        code.add(instructions.Ent(varSpace, varSpace))
 
         # First: initialise global variables
         code.add(env.string_literal_code())
