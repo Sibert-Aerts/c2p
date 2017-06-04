@@ -31,6 +31,9 @@ class CType:
     def __str__(self):
         raise NotImplementedError()
 
+    def _str(self, inner):
+        return str(self) + ' ' + inner
+
     def ignoreConst(self):
         return self
 
@@ -95,7 +98,7 @@ class CLayerType(CType):
         self.t = t
 
     def __str__(self):
-        return '{0}({1})'.format(self.__class__.__name__, self.t.__str__())
+        return self._str('')
 
     def ignoreConst(self):
         return self.__class__(self.t.ignoreConst())
@@ -107,8 +110,14 @@ class CPointer(CLayerType):
     def default(self) -> Any:
         return 0
 
-    def __str__(self):
-        return self.t.__str__() + '*'
+    def _str(self, inner):
+        if isinstance(self.t, CConst):
+            inner = '* const ' + inner
+        else: 
+            inner = '*' + inner
+        if isinstance(self.t.ignoreConst(), CArray):
+            inner = '(' + inner + ')'
+        return self.t._str(inner)
 
 class CArray(CLayerType):
     def __init__(self, t: CType, length=None) -> None:
@@ -128,8 +137,9 @@ class CArray(CLayerType):
     def default(self) -> Any:
         return 0
 
-    def __str__(self):
-        return str(self.t) + '[' + ('' if self.length is None else str(self.length)) + ']'
+    def _str(self, inner):
+        l = ('' if self.length is None else str(self.length))
+        return self.t._str(inner + '[' + l + ']')
 
     def ignoreConst(self):
         return CArray(self.t.ignoreConst(), self.length)
@@ -144,11 +154,10 @@ class CConst(CLayerType):
     def default(self) -> Any:
         return self.t.default()
 
-    def __str__(self):
-        # TODO I am almost 100% certain this is wrong
-        if isinstance(self.t, CPointer):
-            return self.t.t.__str__() + '* const'
+    def _str(self, inner):
+        if not isinstance(self.t, CLayerType):
+            return 'const ' + str(self.t) + ' ' + inner
         else:
-            return 'const ' + self.t.__str__()
+            return self.t._str(inner)
 
 fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar(), 'bool' : CBool()}
