@@ -3,16 +3,15 @@
 ## Language
 
 2. **Import (mandatory)**  
-The import of stdio should be supported (`#include <stdio.h>`).  
-Furthermore, only the functions `int printf(char *format, ...)` and `int scanf(const char *format, ...)` must be supported, as defined in \[11]: the format string allows interpretation of sequences of the form `%[width][code]` (width only in case of output). Provide support for at least for the type codes `d`, `i`, `s` and `c`. You may consider the `char*` types to be `char` arrays. Flags and modifiers, as described in [14], do not need to be supported.  
+`int scanf(const char *format, ...)` must be supported, as defined in \[11]: the format string allows interpretation of sequences of the form `%[code]`.
 The behavior of scanf is well documented in the man pages [15, 10].
-Support for single line (and multi-line) comments.
+(The return value of printf and scanf?)
 
 6. **Functions (mandatory)**  
     1. (optional) Check whether all paths in a function body end with a return statement (not required for procedures that return `void`).
 
 7. **Arrays (mandatory)**  
-Array variables should be supported, as well as operations on individual array elements. Mind the correct use of dimensions and indices. Support for 1-dimensional static arrays is a mandatory feature; support for multi-dimensional arrays is optional, as well as dynamic arrays and assignments of complete arrays or array rows.
+Array variables should be supported, as well as operations on individual array elements. Mind the correct use of dimensions and indices. Support for 1-dimensional static arrays is a mandatory feature.
     1. (optional) multi-dimensional arrays.
     1. (optional) assignments of complete arrays or array rows in case of multi-dimensional arrays.
     1. (optional) dynamic arrays.
