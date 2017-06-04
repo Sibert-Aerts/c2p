@@ -75,20 +75,20 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
         if token == '%s':
             node = arguments[i].to_code(env)
             if node.type.ignoreConst() != CArray(CChar()) and node.type.ignoreConst() != CPointer(CChar()):
-                raise SemanticError('%s matched up with non-string in printf.', where)
+                raise SemanticError('%s matched up with {} in printf.'.format(node.type), where)
             code.add(string_print_loop(node))
             i += 1
         elif token == '%d':
             node = arguments[i].to_code(env)
             if node.type.ignoreConst() != CInt():
-                raise SemanticError('%d matched up with non-integer in printf.', where)
+                raise SemanticError('%d matched up with {} in printf.'.format(node.type), where)
             code.add(node)
             code.add(Out1(PInteger))
             i += 1
         elif token[0] == '%' and token[-1] == 'f':
             node = arguments[i].to_code(env)
             if node.type.ignoreConst() != CFloat():
-                raise SemanticError('%f matched up with non-float in printf.', where)
+                raise SemanticError('%f matched up with {} in printf.'.format(node.type), where)
             code.add(node)
             if len(token) > 2:
                 code.add(Ldc(PInteger, token[1:-1]))
@@ -99,7 +99,7 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
         elif token == '%c':
             node = arguments[i].to_code(env)
             if node.type.ignoreConst() != CChar():
-                raise SemanticError('%c matched up with non-character in printf.', where)
+                raise SemanticError('%c matched up with {} in printf.'.format(node.type), where)
             code.add(node)
             code.add(Out1(PCharacter))
             i += 1

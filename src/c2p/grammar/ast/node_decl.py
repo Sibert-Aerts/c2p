@@ -28,8 +28,8 @@ class IdentifierDeclarator(DeclaratorASTNode):
         super().__init__(where)
         self.identifier = identifier
 
-    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
-        return (declarationType, self.identifier.name)
+    def to_var(self, innerType: CType) -> Tuple[CType, str]:
+        return (innerType, self.identifier.name)
 
 
 class PointerDeclarator(DeclaratorASTNode):
@@ -37,9 +37,8 @@ class PointerDeclarator(DeclaratorASTNode):
         super().__init__(where)
         self.inner = inner
 
-    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
-        innerType, name = self.inner.to_var(declarationType)
-        return (CPointer(innerType), name)
+    def to_var(self, innerType: CType) -> Tuple[CType, str]:
+        return self.inner.to_var(CPointer(innerType))
 
 
 
@@ -48,9 +47,8 @@ class ConstantDeclarator(DeclaratorASTNode):
         super().__init__(where)
         self.inner = inner
 
-    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
-        innerType, name = self.inner.to_var(declarationType)
-        return (CConst(innerType), name)
+    def to_var(self, innerType: CType) -> Tuple[CType, str]:
+        return self.inner.to_var(CConst(innerType))
 
 
 class ArrayDeclarator(DeclaratorASTNode):
@@ -59,9 +57,8 @@ class ArrayDeclarator(DeclaratorASTNode):
         self.inner = inner
         self.size = size
 
-    def to_var(self, declarationType: CType) -> Tuple[CType, str]:
-        innerType, name = self.inner.to_var(declarationType)
-        return (CArray(innerType), name)
+    def to_var(self, innerType: CType) -> Tuple[CType, str]:
+        return self.inner.to_var(CArray(innerType, self.size))
 
 
 
@@ -111,15 +108,17 @@ class Declaration(ASTNode):
 
             init = None
             if decl.init is not None:
+                if isinstance(declarationType.ignoreConst(), CArray):
+                    raise SemanticError('Cannot initialise arrays.', self.where)
                 init = decl.init
             else:
                 # Initialise as zero: init is a Constant
                 init = Constant(self.where, CConst(declarationType), declarationType.default())
 
-            c = init_to_code(env, name, init, self.where)
-
-            code.add(c)
-            # max stack space depends entirely on the max. required by any of the init assignments
-            code.maxStackSpace = max(code.maxStackSpace, c.maxStackSpace)
+            if not isinstance(declarationType.ignoreConst(), CArray):
+                c = init_to_code(env, name, init, self.where)
+                code.add(c)
+                # max stack space depends entirely on the max. required by any of the init assignments
+                code.maxStackSpace = max(code.maxStackSpace, c.maxStackSpace)
 
         return code

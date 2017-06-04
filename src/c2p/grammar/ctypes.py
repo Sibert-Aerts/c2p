@@ -117,17 +117,22 @@ class CArray(CLayerType):
 
     def size(self) -> int:
         if self.length is None:
-            raise Exception('Attempted to get length of array with non-specified length.')
+            return 1
         return self.length * self.t.size()
 
     def ptype(self) -> PType:
-        return PAddress
+        if self.length is None:
+            return PAddress
+        return self.t.ptype()
 
     def default(self) -> Any:
         return 0
 
     def __str__(self):
-        return str(self.t) + '[' + ('' if self.length is None else '') + ']'
+        return str(self.t) + '[' + ('' if self.length is None else str(self.length)) + ']'
+
+    def ignoreConst(self):
+        return CArray(self.t.ignoreConst(), self.length)
 
 class CConst(CLayerType):
     def ptype(self) -> PType:

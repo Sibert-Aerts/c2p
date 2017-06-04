@@ -292,9 +292,14 @@ class ASTVisitor(SmallCVisitor):
                 # I put a None here and hope to remember it later.
                 return ArrayDeclarator(where(ctx), self.visit(children[0]), None)
 
-            # directDeclarator [ assignment ]
+            # directDeclarator [ Constant ]
             elif len(children) == 4:
-                return ArrayDeclarator(where(ctx), self.visit(children[0]), self.visit(children[2]))
+                length = self.visit(children[2])
+                if not isinstance(length, Constant):
+                    raise SemanticError("Array length is not a compile-time constant", where(children[2]))
+                if not length.type.ignoreConst() == CInt():
+                    raise SemanticError("Array length is not of type int", where(children[2]))
+                return ArrayDeclarator(where(ctx), self.visit(children[0]), length.value)
 
         else:
             raise Impossible()

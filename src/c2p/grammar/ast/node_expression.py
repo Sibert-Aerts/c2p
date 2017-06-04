@@ -73,8 +73,11 @@ class OperationAssignment(ASTNode):
         code.add(cr)
 
         # TODO: type compatibility & implicit casting logic!
-        if(cl.type != cr.type.ignoreConst()):
+        if cl.type != cr.type.ignoreConst():
             raise self.semanticError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
+
+        if isinstance(cl.type.ignoreConst(), CArray):
+            raise self.semanticError('Cannot assign arrays to arrays.')
 
         # Apply the operation (if any)
         if self.operation:
@@ -442,7 +445,9 @@ class Dereference(ASTNode):
             raise self.semanticError('Expression of type {} cannot be dereferenced.'.format(c.type))
 
         code.add(c)
-        code.add(instructions.Ind(c.type.t.ptype()))
+
+        if not isinstance(c.type.t.ignoreConst(), CArray):
+            code.add(instructions.Ind(c.type.t.ptype()))
 
         code.maxStackSpace = c.maxStackSpace
 
@@ -517,33 +522,10 @@ class Index(ASTNode):
         self.index = index
 
     def to_code(self, env: Environment) -> CodeNode:
-        code = CodeNode()
+        code = self.to_lcode(env)
 
-        # The array
-        ca = self.array.to_code(env)
-
-        # Ensure the array is indexable
-        if not isinstance(ca.type, (CPointer, CArray)):
-            raise self.semanticError('Expression of type {} cannot be indexed.'.format(ca.type))
-
-        # The type of the items in the array (may itself be an array)
-        itemType = ca.type.t
-
-        # The index
-        ci = self.index.to_code(env)
-        if ci.type.ignoreConst() != CInt():
-            raise self.semanticError('Cannot use expression of type {} as index.'.format(ci.type))
-
-        # Load array and index onto stack
-        code.add(ca)
-        code.add(ci)
-        # Find the offset from the base pointer
-        itemSize = itemType.size()
-        code.add(instructions.Ixa(itemSize))
-        code.add(instructions.Ind(itemType.ptype()))
-
-        code.type = itemType
-        code.maxStackSpace = max(ca.maxStackSpace, ci.maxStackSpace + 1)
+        if not isinstance(code.type.ignoreConst(), CArray):
+            code.add(instructions.Ind(code.type.ptype()))
 
         return code
 
@@ -668,7 +650,11 @@ class IdentifierExpression(ASTNode):
 
         var = env.get_variable(self.identifier.name, self.where)
 
-        code.add(instructions.Lod(var.ptype, 0 if not var.isGlobal else 1, var.address))
+        p = 0 if not var.isGlobal else 1
+        if isinstance(var.ctype.ignoreConst(), CArray):
+            code.add(instructions.Lda(p, var.address))
+        else:
+            code.add(instructions.Lod(var.ptype, p, var.address))
         code.type = var.ctype
 
         code.maxStackSpace = 1

@@ -76,7 +76,7 @@ class Scope:
     def _alloc(self, size: int) -> int:
         offset = self.frame_var_space()
         self.varSpace += size
-        self.varScope.maxVarSpace = max(self.varScope.maxVarSpace, offset + 1)
+        self.varScope.maxVarSpace = max(self.varScope.maxVarSpace, offset + size)
         return offset
 
     def _get_variable(self, name: str, where: SourceInterval) -> VariableRecord:
@@ -101,16 +101,12 @@ class Scope:
             raise SemanticError('Repeated declaration of symbol "{}"'.format(name), where)
 
         # Make a new variable record and register it to the current scope.
-        ptype = ctype.ptype()
+        address = self._alloc(ctype.size())
+        # The size of the stack frame differs between global/local scope
         isGlobal = (self.depth == 0)
-        # Address works differently for global/local variables
-        address = self._alloc(ptype.size())
-        if not isGlobal:
-            address += 5
-        else:
-            address += 9
+        address += 9 if isGlobal else 5
 
-        self.symbols[name] = VariableRecord(ctype, ptype, address, self.depth, isGlobal)
+        self.symbols[name] = VariableRecord(ctype, ctype.ptype(), address, self.depth, isGlobal)
 
     def _register_function(self, name: str, returnType: CType, signature: List[CType], where: SourceInterval) -> Label:
         assert self.depth == 0, 'register_function not at global scope'
