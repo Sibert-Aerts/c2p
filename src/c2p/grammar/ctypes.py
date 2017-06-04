@@ -1,5 +1,5 @@
 from ..ptypes import PType, PAddress, PBoolean, PCharacter, PInteger, PReal
-from typing import Any
+from typing import Any, Optional
 
 class CType:
     def __init__(self) -> None:
@@ -17,6 +17,29 @@ class CType:
 
     def __hash__(self):
        return hash(tuple(sorted(self.__dict__.items())))
+
+    def equivalent(self, other):
+        return self.ignoreConst() == other.ignoreConst()
+
+    def promotes_to(self, other : 'CType') -> bool:
+        '''Test whether this type can be promoted to the other type without loss.'''
+        s = self.ignoreConst().__class__
+        o = other.ignoreConst().__class__
+        if not (s in classOrder and o in classOrder):
+            return False
+        return classOrder.index(s) <= classOrder.index(o)
+        
+    def common_promote(self, other : 'CType') -> Optional['CType']:
+        '''
+        Finds the smallest type that both can be promoted to without loss.
+        Returns None if no such type exists.
+        '''
+        if self.promotes_to(other):
+            return other.ignoreConst()
+        elif other.promotes_to(self):
+            return self.ignoreConst()
+        return None
+        return classOrder.index(s) <= classOrder.index(o)
 
     def ptype(self) -> PType:
         raise NotImplementedError()
@@ -98,7 +121,7 @@ class CLayerType(CType):
         self.t = t
 
     def __str__(self):
-        return self._str('')
+        return self._str('').rstrip()
 
     def ignoreConst(self):
         return self.__class__(self.t.ignoreConst())
@@ -161,3 +184,5 @@ class CConst(CLayerType):
             return self.t._str(inner)
 
 fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar(), 'bool' : CBool()}
+
+classOrder = [CBool, CChar, CInt, CFloat]

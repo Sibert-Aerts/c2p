@@ -1,6 +1,6 @@
 // file full of bizarre grammatically correct scenarios
 
-void **const*const* main(void flup[x][y + 2][-100], int x, const const float y, char (*blub)[]){
+void **const*const* main(void flup[99][100], int x, const const float y, char (*blub)[]){
 
     // empty
     ;;;;;;
@@ -25,7 +25,6 @@ void **const*const* main(void flup[x][y + 2][-100], int x, const const float y, 
     y++++++;
     ((x));
     f(f(f()));
-    x[x[x[x]]];
     (const int*const)(const int*const)x;
     int(((x)));
 

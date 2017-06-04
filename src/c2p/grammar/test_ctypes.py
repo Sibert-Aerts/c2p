@@ -16,5 +16,39 @@ class TestCTypesEquality(unittest.TestCase):
         self.assertTrue(CConst(CPointer(CVoid())).ignoreConst() == CPointer(CConst(CVoid())).ignoreConst())
         self.assertTrue(CConst(CPointer(CConst(CVoid()))).ignoreConst() == CPointer(CConst(CVoid())).ignoreConst())
 
+    def test_promotion(self):
+        self.assertTrue(CFloat().promotes_to(CFloat()))
+        self.assertTrue(CInt().promotes_to(CFloat()))
+        self.assertTrue(CChar().promotes_to(CFloat()))
+        self.assertTrue(CBool().promotes_to(CFloat()))
+
+        self.assertFalse(CFloat().promotes_to(CInt()))
+        self.assertTrue(CInt().promotes_to(CInt()))
+        self.assertTrue(CChar().promotes_to(CInt()))
+        self.assertTrue(CBool().promotes_to(CInt()))
+
+        self.assertFalse(CFloat().promotes_to(CChar()))
+        self.assertFalse(CInt().promotes_to(CChar()))
+        self.assertTrue(CChar().promotes_to(CChar()))
+        self.assertTrue(CBool().promotes_to(CChar()))
+
+        self.assertFalse(CFloat().promotes_to(CBool()))
+        self.assertFalse(CInt().promotes_to(CBool()))
+        self.assertFalse(CChar().promotes_to(CBool()))
+        self.assertTrue(CBool().promotes_to(CBool()))
+
+        self.assertFalse(CInt().promotes_to(CVoid()))
+        self.assertFalse(CVoid().promotes_to(CInt()))
+        
+    def test_promotion_2(self):
+        self.assertTrue(CFloat() == CInt().common_promote(CFloat()))
+        self.assertTrue(CFloat() == CBool().common_promote(CFloat()))
+        self.assertTrue(CInt() == CInt().common_promote(CChar()))
+        self.assertTrue(CInt() == CInt().common_promote(CBool()))
+        self.assertTrue(CInt() == CBool().common_promote(CInt()))
+
+        self.assertTrue(CInt().common_promote(CVoid()) is None)
+        self.assertTrue(CVoid().common_promote(CInt()) is None)
+
 if __name__ == '__main__':
     unittest.main()
