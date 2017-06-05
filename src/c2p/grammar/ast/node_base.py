@@ -4,7 +4,7 @@ from ...codegen.environment import Environment
 from ...codegen.code_node import CodeNode
 from ...codegen.error import SemanticError
 from ... import instructions
-from ...codegen.error import ASTError
+from ...codegen.error import ASTError, warn
 from c2p.source_interval import SourceInterval
 from c2p.codegen.error import warn
 
