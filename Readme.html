@@ -43,12 +43,12 @@
     <h3>Gebruik</h3>
     <p>
         Om de grammatica te compileren en onmiddelijk op de juiste plaats te steken hoeft men enkel 
-        de volgende commandos uit te voeren vanuit de basis directory:
+        de volgende commando's uit te voeren vanuit de basis directory:
         <p class="code-box">
             cd grammar<br>
             ./convert SmallC.g4
         </p>
-        (Dit komt simpelweg overeen met het compileren van de grammatica aan de hand van antlr, en vervolgens de gegenereerde bestanden in <i>src/c2p/grammar/antlr</i> te plaatsen.)
+        (Dit komt simpelweg overeen met het compileren van de grammatica aan de hand van ANTLR, en vervolgens de gegenereerde bestanden in <i>src/c2p/grammar/antlr</i> te plaatsen.)
         </p>
         
         Om een bestand <i>code.c</i> te compileren dient de volgende code te worden uitgevoerd:
@@ -58,9 +58,12 @@
         Indien succesvol produceert dit 2 bestanden:
         <ul>
             <li><i>AST.dot</i>: De AST boom in DOT formaat.</li>
-            <li><i>code.p</i>: De gecompileerde p-code.</li>
+            <li><i>code.p</i>: De gecompileerde P-machine code.</li>
         </ul>
     </p>
+
+	<h4>P-machine interpreter</h4>
+	<p>Bij gebrek aan een <i>data</i>-sectie zet onze compiler string literals op de eerste adressen van de heap. Hiertoe wordt het <i>sro</i> commando gebruikt met negatieve literal argumenten; dit is fout geïmplementeerd in de P-machine interpreter die we gegeven werden. We hebben de bug gefixt, en een werkende interpreter <a href="https://github.com/lynn/Pmachine">online geplaatst</a>. (Zie <a href="https://github.com/lynn/Pmachine/commit/1578d2b5c3cff6c5f0135eec5e15f97d7976cb69">hier</a> voor een diff van de bugfix.)</p>
 
     <h3>Functionaliteit:</h3>
     <p>
