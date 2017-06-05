@@ -52,7 +52,7 @@ def string_scan_loop(node: CodeNode):
 def to_code(arguments: List[Expression], env: Environment, where: SourceInterval):
     # Get the format string.
     fmt = arguments[0]
-    if not (fmt.__class__.__name__ == 'Constant' and fmt.type.ignoreConst() == CArray(CChar())):
+    if not (fmt.__class__.__name__ == 'Constant' and isinstance(fmt.type.ignoreConst(), CArray)):
         raise SemanticError('First argument to "scanf" should be a string literal.', where)
     fmt = fmt.value
     assert isinstance(fmt, str)

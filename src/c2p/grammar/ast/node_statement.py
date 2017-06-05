@@ -33,7 +33,7 @@ class CondStatement(ASTNode):
             if ccond.type.demotes_to(CBool()):
                 code.add(instructions.Conv(ccond.type.ptype(), PBoolean))
             else:
-                raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(cl.type))
+                raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(ccond.type))
         code.add(instructions.Fjp(falseLabel.label))
 
         ctrue = self.trueBody.to_code(env)
@@ -79,7 +79,7 @@ class WhileStatement(ASTNode):
             if ccond.type.demotes_to(CBool()):
                 code.add(instructions.Conv(ccond.type.ptype(), PBoolean))
             else:
-                raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(cl.type))
+                raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(ccond.type))
         code.add(instructions.Fjp(endLabel.label))
         code.add(cbody)
         code.add(instructions.Ujp(startLabel.label))
@@ -146,7 +146,7 @@ class ForStatement(ASTNode):
                 if ccond.type.demotes_to(CBool()):
                     code.add(instructions.Conv(ccond.type.ptype(), PBoolean))
                 else:
-                    raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(cl.type))
+                    raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(ccond.type))
             code.add(instructions.Fjp(endLabel.label))
         code.add(cbody)
         if self.right:

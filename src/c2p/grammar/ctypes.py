@@ -32,7 +32,7 @@ class CType:
         if not (s in numericOrder and o in numericOrder):
             return False
         return numericOrder.index(s) >= numericOrder.index(o)
-        
+
     def common_promote(self, other : 'CType') -> Optional['CType']:
         '''
         Finds the smallest type that both can be promoted to without loss.
@@ -141,7 +141,8 @@ class CPointer(CLayerType):
 
     def promotes_to(self, other : 'CType') -> bool:
         '''Test whether this type can be promoted to the other type without loss.'''
-        return isinstance(other.ignoreConst(), CPointer) and self.t.equivalent(other.t)
+        o = other.ignoreConst()
+        return isinstance(o, CPointer) and self.t.equivalent(o.t)
 
     def _str(self, inner):
         if isinstance(self.t, CConst):
