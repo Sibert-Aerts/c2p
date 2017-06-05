@@ -306,6 +306,7 @@ class Cast(ASTNode):
         # Load the expression onto the stack
         c = self.right.to_code(env)
         code.add(c)
+        print(c.type)
         # Do we need to test type compatibility here? cast is just all-powerful right?
         code.add(instructions.Conv(c.type.ptype(), self.type.ptype()))
 

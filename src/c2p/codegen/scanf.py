@@ -41,8 +41,8 @@ def string_scan_loop(node: CodeNode):
     code.add(Sto(PCharacter))         # q
 
     # Discard a value.
-    code.add(Dpl(PCharacter))
-    code.add(Equ(PCharacter))
+    code.add(Dpl(PAddress))
+    code.add(Equ(PAddress))
     code.add(Fjp(done_label.label))
 
     code.type = CVoid()

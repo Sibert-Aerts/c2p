@@ -2,6 +2,6 @@
 int main() {
 	char s[20];
 	scanf("%s", (char*)s);
-	// printf("You typed: %s.\n", s);
+	printf("You typed: %s.\n", s);
 	return 0;
 }

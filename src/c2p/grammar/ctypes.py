@@ -28,7 +28,7 @@ class CType:
         if not (s in classOrder and o in classOrder):
             return False
         return classOrder.index(s) <= classOrder.index(o)
-        
+
     def common_promote(self, other : 'CType') -> Optional['CType']:
         '''
         Finds the smallest type that both can be promoted to without loss.
@@ -136,7 +136,7 @@ class CPointer(CLayerType):
     def _str(self, inner):
         if isinstance(self.t, CConst):
             inner = '* const ' + inner
-        else: 
+        else:
             inner = '*' + inner
         if isinstance(self.t.ignoreConst(), CArray):
             inner = '(' + inner + ')'
@@ -153,9 +153,7 @@ class CArray(CLayerType):
         return self.length * self.t.size()
 
     def ptype(self) -> PType:
-        if self.length is None:
-            return PAddress
-        return self.t.ptype()
+        return PAddress
 
     def default(self) -> Any:
         return 0
