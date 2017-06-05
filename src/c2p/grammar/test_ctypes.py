@@ -50,5 +50,27 @@ class TestCTypesEquality(unittest.TestCase):
         self.assertTrue(CInt().common_promote(CVoid()) is None)
         self.assertTrue(CVoid().common_promote(CInt()) is None)
 
+
+
+        self.assertTrue(CArray(CInt(), 10).common_promote(CPointer(CInt())) == CPointer(CInt()))
+        self.assertTrue(CArray(CInt(), 10).common_promote(CArray(CInt(), 20)) == CArray(CInt(), 30))
+        self.assertTrue(CArray(CInt(), 10).common_promote(CArray(CConst(CInt()), 20)) == CArray(CInt(), 30))
+        self.assertTrue(CArray(CConst(CInt()), 10).common_promote(CArray(CInt(), 20)) == CArray(CInt(), 30))
+        self.assertTrue(CArray(CConst(CInt()), 10).common_promote(CArray(CConst(CInt()), 20)) == CArray(CInt(), 30))
+
+    def test_equivalence(self):
+        self.assertTrue(CVoid().equivalent(CVoid()))
+        self.assertTrue(CInt().equivalent(CInt()))
+        self.assertTrue(CInt().equivalent(CConst(CInt())))
+        self.assertFalse(CInt().equivalent(CFloat()))
+        self.assertFalse(CInt().equivalent(CConst(CFloat())))
+        
+        self.assertTrue(CPointer(CInt()).equivalent(CConst(CPointer(CConst(CInt())))))
+        self.assertTrue(CArray(CInt(), 10).equivalent(CConst(CArray(CConst(CInt()), 10))))
+        self.assertTrue(CArray(CInt(), 10).equivalent(CConst(CArray(CConst(CInt()), 20))))
+        self.assertTrue(CArray(CInt(), 10).equivalent(CArray(CConst(CInt()), 20)))
+        self.assertTrue(CArray(CInt(), 10).equivalent(CArray(CInt(), 20)))
+        self.assertTrue(CConst(CArray(CConst(CInt()), 10)).equivalent(CConst(CArray(CConst(CInt()), 20))))
+
 if __name__ == '__main__':
     unittest.main()

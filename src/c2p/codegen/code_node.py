@@ -15,7 +15,7 @@ class CodeNode:
         '''Add a new instruction, or append all instructions from another node.'''
         if isinstance(other, CodeNode):
             self.code += other.code
-            if desiredType is not None and not other.type.equivalent(desiredType):
+            if desiredType is not None and not other.type.ptype() == desiredType.ptype():
                 self.code.append(Conv(other.type.ptype(), desiredType.ptype()))
         else:
             self.code.append(other)

@@ -56,6 +56,22 @@ int main(){
     assertEqf(100.0, 'a' + 2 + 1.0);
     assertEqf(100.0, 'a' + 1 + 1.0 + true);
     
+    float x = 10;
+    x = 20;
+    x = 'c';
+    x = true;
+    
+    int y = 10;
+    y = 'c';
+    y = true;
+    
+    char c = 'c';
+    c = true;
+    
+    x = true ? 20 : 30.0;
+    y = true ? 'c' : 20;
+    c = true ? true : 'c';
+    
     endTest();
 }
 

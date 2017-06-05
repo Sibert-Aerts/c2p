@@ -39,9 +39,6 @@ class TestSemanticErrors(unittest.TestCase):
     def test_float_as_int(self):
         self.assertTrue(_test('float_as_int.c', 'Incompatible assignment of const float to int.'))
 
-    def test_int_as_float(self):
-        self.assertTrue(_test('int_as_float.c', 'Incompatible assignment of const int to float.'))
-
     def test_int_as_char(self):
         self.assertTrue(_test('int_as_char.c', 'Incompatible assignment of const int to char.'))
 
@@ -70,7 +67,19 @@ class TestSemanticErrors(unittest.TestCase):
         self.assertTrue(_test('too_many_args.c', 'Invalid call to "func": Expected 0 arguments, got 1.'))
 
     def test_wrong_args(self):
-        self.assertTrue(_test('wrong_args.c', 'Invalid call to "func": Expected expression of type int, got const float.'))
+        self.assertTrue(_test('wrong_args.c', 'Invalid call to "func": Expected expression of type int or less, got const float.'))
+
+    def test_arrlength_const(self):
+        self.assertTrue(_test('arrlength_const.c', 'Array length is not a compile-time constant'))
+
+    def test_arrlength_type(self):
+        self.assertTrue(_test('arrlength_type.c', 'Array length is not of type int'))
+
+    def test_break(self):
+        self.assertTrue(_test('break.c', 'Attempted to "break" outside a loop.'))
+
+    def test_continue(self):
+        self.assertTrue(_test('continue.c', 'Attempted to "continue" outside a loop.'))
 
 if __name__ == '__main__':
     unittest.main()

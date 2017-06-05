@@ -6,14 +6,10 @@ class CType:
         self.class_ = self.__class__
 
     def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
-        return NotImplemented
+        return isinstance(other, self.__class__)
 
     def __ne__(self, other):
-        if isinstance(other, self.__class__):
-            return not self == other
-        return NotImplemented
+        return not self == other
 
     def __hash__(self):
        return hash(tuple(sorted(self.__dict__.items())))
@@ -25,17 +21,17 @@ class CType:
         '''Test whether this type can be promoted to the other type without loss.'''
         s = self.ignoreConst().__class__
         o = other.ignoreConst().__class__
-        if not (s in classOrder and o in classOrder):
+        if not (s in numericOrder and o in numericOrder):
             return False
-        return classOrder.index(s) <= classOrder.index(o)
+        return numericOrder.index(s) <= numericOrder.index(o)
 
     def demotes_to(self, other : 'CType') -> bool:
-        '''Test whether converting to the given type causes loss.'''
+        '''Test whether converting to the given type is possible and causes loss.'''
         s = self.ignoreConst().__class__
         o = other.ignoreConst().__class__
-        if not (s in classOrder and o in classOrder):
+        if not (s in numericOrder and o in numericOrder):
             return False
-        return classOrder.index(s) > classOrder.index(o)
+        return numericOrder.index(s) >= numericOrder.index(o)
         
     def common_promote(self, other : 'CType') -> Optional['CType']:
         '''
@@ -127,6 +123,9 @@ class CLayerType(CType):
         super().__init__()
         self.t = t
 
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.t == other.t
+
     def __str__(self):
         return self._str('').rstrip()
 
@@ -140,6 +139,10 @@ class CPointer(CLayerType):
     def default(self) -> Any:
         return 0
 
+    def promotes_to(self, other : 'CType') -> bool:
+        '''Test whether this type can be promoted to the other type without loss.'''
+        return isinstance(other.ignoreConst(), CPointer) and self.t.equivalent(other.t)
+
     def _str(self, inner):
         if isinstance(self.t, CConst):
             inner = '* const ' + inner
@@ -150,13 +153,15 @@ class CPointer(CLayerType):
         return self.t._str(inner)
 
 class CArray(CLayerType):
-    def __init__(self, t: CType, length=None) -> None:
+    def __init__(self, t: CType, length : int) -> None:
         super().__init__(t)
-        self.length = length    # Type: int
+        self.length = length
+
+    def promotes_to(self, other : 'CType') -> bool:
+        '''Test whether this type can be promoted to the other type without loss.'''
+        return isinstance(other.ignoreConst(), (CArray, CPointer)) and self.t.equivalent(other.ignoreConst().t)
 
     def size(self) -> int:
-        if self.length is None:
-            return 1
         return self.length * self.t.size()
 
     def ptype(self) -> PType:
@@ -166,8 +171,7 @@ class CArray(CLayerType):
         return 0
 
     def _str(self, inner):
-        l = ('' if self.length is None else str(self.length))
-        return self.t._str(inner + '[' + l + ']')
+        return self.t._str(inner + '[' + str(self.length) + ']')
 
     def ignoreConst(self):
         return CArray(self.t.ignoreConst(), self.length)
@@ -178,6 +182,9 @@ class CConst(CLayerType):
 
     def ignoreConst(self):
         return self.t.ignoreConst()
+
+    def promotes_to(self, other : 'CType') -> bool:
+        return self.t.promotes_to(other)
 
     def default(self) -> Any:
         return self.t.default()
@@ -190,4 +197,4 @@ class CConst(CLayerType):
 
 fromTypeName = { 'void' : CVoid(), 'int' : CInt(), 'float' : CFloat(), 'char' : CChar(), 'bool' : CBool()}
 
-classOrder = [CBool, CChar, CInt, CFloat]
+numericOrder = [CBool, CChar, CInt, CFloat]

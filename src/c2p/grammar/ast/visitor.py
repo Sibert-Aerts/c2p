@@ -289,8 +289,8 @@ class ASTVisitor(SmallCVisitor):
         elif children and isinstance(children[0], SmallCParser.DirectDeclaratorContext):
             # directDeclarator []
             if len(children) == 3:
-                # I put a None here and hope to remember it later.
-                return ArrayDeclarator(where(ctx), self.visit(children[0]), None)
+                # An array without a length is just a pointer.
+                return PointerDeclarator(where(ctx), self.visit(children[0]))
 
             # directDeclarator [ Constant ]
             elif len(children) == 4:
@@ -607,14 +607,15 @@ class ASTVisitor(SmallCVisitor):
         elif _type == SmallCParser.CharacterConstant:
             return Constant(where(ctx), CConst(CChar()), literal_eval(_value))
         elif _type == SmallCParser.StringConstant:
-            return Constant(where(ctx), CConst(CArray(CConst(CChar()))), literal_eval(_value))
+            _value = literal_eval(_value)
+            return Constant(where(ctx), CConst(CArray(CConst(CChar()), len(_value) + 1)), _value)
         elif _type == SmallCParser.BoolConstant:
             if _value == "true":
                 _value = True
             elif _value == "false":
                 _value = False
             else:
-                raise Impossible
+                raise Impossible()
             return Constant(where(ctx), CConst(CBool()), _value)
         else:
             raise Impossible()

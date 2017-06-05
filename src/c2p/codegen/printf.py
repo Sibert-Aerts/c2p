@@ -50,7 +50,7 @@ def string_print_loop(node: CodeNode):
 def to_code(arguments: List[Expression], env: Environment, where: SourceInterval):
     # Get the format string.
     fmt = arguments[0]
-    if not (isinstance(fmt, Constant) and fmt.type.ignoreConst() == CArray(CChar())):
+    if not (isinstance(fmt, Constant) and fmt.type.equivalent(CArray(CChar(), 1))):
         raise SemanticError('First argument to "printf" should be a string literal.'
             ' (Hint: try `printf("%s", foo)` to print a non-literal string.)', where)
     fmt = fmt.value

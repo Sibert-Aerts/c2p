@@ -80,10 +80,10 @@ def init_to_code(env : Environment, name : str, init : Expression, where: Source
 
     # Evaluate the right expression and put it on the stack
     cinit = init.to_code(env)
-    code.add(cinit)
 
-    # TODO: type compatibility & implicit casting logic!
-    if(var.ctype.ignoreConst() != cinit.type.ignoreConst()):
+    if cinit.type.promotes_to(var.ctype):
+        code.add(cinit, var.ctype)
+    else:
         raise SemanticError('Incompatible initialisation of {} as {}.'.format(var.ctype, cinit.type), where)
 
     # Store the value
@@ -103,19 +103,19 @@ class Declaration(ASTNode):
         code = CodeNode()
 
         for decl in self.initDeclarators:
-            declarationType, name = decl.declarator.to_var(self.type)
-            env.register_variable(name, declarationType, self.where)
+            declType, name = decl.declarator.to_var(self.type)
+            env.register_variable(name, declType, self.where)
 
             init = None
             if decl.init is not None:
-                if isinstance(declarationType.ignoreConst(), CArray):
+                if isinstance(declType.ignoreConst(), CArray):
                     raise SemanticError('Cannot initialise arrays.', self.where)
                 init = decl.init
             else:
                 # Initialise as zero: init is a Constant
-                init = Constant(self.where, CConst(declarationType), declarationType.default())
+                init = Constant(self.where, CConst(declType), declType.default())
 
-            if not isinstance(declarationType.ignoreConst(), CArray):
+            if not isinstance(declType.ignoreConst(), CArray):
                 c = init_to_code(env, name, init, self.where)
                 code.add(c)
                 # max stack space depends entirely on the max. required by any of the init assignments
