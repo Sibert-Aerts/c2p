@@ -20,7 +20,10 @@ def run(argv):
     if len(argv) < 2:
         sys.exit('Supply a C code file to compile.')
 
-    inputStream = FileStream(argv[1])
+    try:
+        inputStream = FileStream(argv[1])
+    except FileNotFoundError as e:
+        sys.exit(e)
     parser = SmallCParser(CommonTokenStream(SmallCLexer(inputStream)))
     parser.removeErrorListeners()
     parser.addErrorListener(ParserSyntaxErrorListener())
