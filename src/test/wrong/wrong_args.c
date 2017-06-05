@@ -4,5 +4,5 @@ int func(int x){
 
 int main(){
     int i;
-    i = func(1.5);
+    i = func(&i);
 }

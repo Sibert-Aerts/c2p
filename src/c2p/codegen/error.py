@@ -36,7 +36,7 @@ class PositionalError(Exception):
 def warn(message: Any, where: SourceInterval) -> None:
     '''Show a warning to stderr.'''
 
-    if "-w" in argv: return
+    if "-w" in argv or len(argv) < 2: return
     # HACK: we read argv[1] all over, here! Blah.
     e = PositionalError(message, where, True)
     stderr.write(e.pretty_print(FileStream(argv[1])))

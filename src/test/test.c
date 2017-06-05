@@ -1,6 +1,6 @@
 #include <stdio.h>
 
 int main(){
-    int a, b, c;
-    int int x int;
+    int y[5][2];
+    int* p = y;
 }
