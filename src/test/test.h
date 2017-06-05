@@ -1,5 +1,10 @@
 int assertCount, errorCount;
 
+void assertTrue(bool x){
+    assertCount++; if(x) return; errorCount++;
+    printf("ASSERTION %d FAILED: False is not true!", assertCount);
+}
+
 void assertEq(int x, int y){
     assertCount++; if(x == y) return; errorCount++;
     printf("ASSERTION %d FAILED: %d does not equal %d\n", assertCount, x, y);
