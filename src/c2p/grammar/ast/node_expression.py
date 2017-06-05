@@ -65,6 +65,9 @@ class OperationAssignment(ASTNode):
         code.add(instructions.Dpl(PAddress))
 
         if self.operation:
+            # Make sure we can actually operate on the given type
+            if not isinstance(cl.type, (CInt, CFloat)):
+                raise self.semanticError('Invalid {} on variable of type {}.'.format(self.__class__.__name__, cl.type))
             # Get the current value of the l-side object (if we need it)
             code.add(instructions.Dpl(PAddress))
             code.add(instructions.Ind(lType))
@@ -441,14 +444,15 @@ class Dereference(ASTNode):
         c = self.inner.to_code(env)
 
         # Ensure it's a pointer
-        if isinstance(c.type.ignoreConst(), CPointer):
-            # the type of this expression is the type that's being pointed at (CPointer.t)
+        if isinstance(c.type.ignoreConst(), (CPointer, CArray)):
+            # the type of this expression is the type that's being pointed at
             code.type = c.type.t
         else:
             raise self.semanticError('Expression of type {} cannot be dereferenced.'.format(c.type))
 
         code.add(c)
 
+        # Don't actually dereference if the type pointed to is an array.
         if not isinstance(c.type.t.ignoreConst(), CArray):
             code.add(instructions.Ind(c.type.t.ptype()))
 

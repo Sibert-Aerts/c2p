@@ -160,7 +160,22 @@ class CArray(CLayerType):
 
     def promotes_to(self, other : 'CType') -> bool:
         '''Test whether this type can be promoted to the other type without loss.'''
-        return isinstance(other.ignoreConst(), (CArray, CPointer)) and self.t.equivalent(other.ignoreConst().t)
+        if isinstance(other.ignoreConst(), CPointer):
+            return self.collapse_arrays().equivalent(other)
+        elif isinstance(other.ignoreConst(), CArray):
+            return self.ignoreConst().t.equivalent(other.ignoreConst().t)
+        return False
+
+    def collapse_arrays(self) -> CType:
+        '''
+        Collapses the top chain of CArrays into a pointer.
+        e.g. int x[10][20]          becomes int* x
+        and  int *(x [10][20]) [30] becomes (**x)[30]
+        '''
+        t = self.t
+        while isinstance(t, CArray):
+            t = t.t
+        return CPointer(t)
 
     def size(self) -> int:
         return self.length * self.t.size()

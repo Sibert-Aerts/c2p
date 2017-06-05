@@ -58,6 +58,16 @@ class FunctionDefinition(ASTNode):
         returnType = self.returnType
         # `parameters` is a list of tuples Tuple[CType, str]
         parameters = [p.to_var() for p in self.parameters]
+
+        # Pass over the parameters first, converting arrays into pointers.
+        for i in range(len(parameters)):
+            p = parameters[i]
+            newType = p[0]
+            if isinstance(newType, CArray):
+                newType = CPointer(newType.collapse_arrays().t)
+                print("Converted argument {} into {}".format(p[0], newType))
+                parameters[i] = (newType, p[1])
+
         # `signature` is a list of CTypes
         signature = [p[0] for p in parameters]
 
