@@ -611,7 +611,7 @@ class Call(ASTNode):
             raise self.semanticError('Call to non-identifier.')
 
         name = self.name.identifier.name
-        returnType, signature, label = env.get_function(name, self.where)
+        returnType, signature, label, _ = env.get_function(name, self.where)
 
         # Verify the number of arguments
         if len(signature) != len (self.arguments):
@@ -635,7 +635,7 @@ class Call(ASTNode):
         argSize = sum([s.ptype().size() for s in signature])
 
         # Make the call
-        code.add(instructions.Cup(argSize, label))
+        code.add(instructions.Cup(argSize, label.label))
 
         # If the function returns, this should consume everything we put on the stack and
         # put a single value of type returnType on the stack.

@@ -43,15 +43,29 @@ class ASTVisitor(SmallCVisitor):
     # Visit a parse tree produced by SmallCParser#program.
     def visitProgram(self, ctx:SmallCParser.ProgramContext):
         declarations = [self.visit(c) for c in ctx.getChildren()
-            if isinstance(c, SmallCParser.FunctionDefinitionContext)
+            if isinstance(c, SmallCParser.FunctionDeclarationContext)
+            or isinstance(c, SmallCParser.FunctionDefinitionContext)
             or isinstance(c, SmallCParser.DeclarationContext)]
         return Program(where(ctx), declarations)
+
+
+    # Visit a parse tree produced by SmallCParser#functionDeclaration.
+    def visitFunctionDeclaration(self, ctx:SmallCParser.FunctionDeclarationContext):
+        children = list(ctx.getChildren())
+        # Underscores indicate a variable is an antlr4 object
+        _specifiers, _pointer, _name = children[:3]
+        _parameters = children[-3] if len(children) == 7 else None
+
+        name = _name.getText()
+        returnType = applyPointerAsType(self.visit(_specifiers), _pointer)
+        parameters = self.visit(_parameters) if _parameters else []
+
+        return FunctionDeclaration(where(ctx), name, returnType, parameters)
 
 
     # Visit a parse tree produced by SmallCParser#functionDefinition.
     def visitFunctionDefinition(self, ctx:SmallCParser.FunctionDefinitionContext):
         children = list(ctx.getChildren())
-        # Underscores indicate a variable is an antlr4 object
         _specifiers, _pointer, _name = children[:3]
         _body = children[-1]
         _parameters = children[-3] if len(children) == 7 else None

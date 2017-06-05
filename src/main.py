@@ -55,6 +55,7 @@ def run(argv):
         exceptiondata = traceback.format_exc().splitlines()
         print('Encountered {0} while {1}:'.format(e.__class__.__name__, action))
         print(e)
+        [print(l) for l in exceptiondata[-3:-1]]
     except NotImplementedError as e:
         exceptiondata = traceback.format_exc().splitlines()
         print('Encountered {0} while {1}:'.format(e.__class__.__name__, action))

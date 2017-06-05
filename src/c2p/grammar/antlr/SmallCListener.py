@@ -17,6 +17,15 @@ class SmallCListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by SmallCParser#functionDeclaration.
+    def enterFunctionDeclaration(self, ctx:SmallCParser.FunctionDeclarationContext):
+        pass
+
+    # Exit a parse tree produced by SmallCParser#functionDeclaration.
+    def exitFunctionDeclaration(self, ctx:SmallCParser.FunctionDeclarationContext):
+        pass
+
+
     # Enter a parse tree produced by SmallCParser#functionDefinition.
     def enterFunctionDefinition(self, ctx:SmallCParser.FunctionDefinitionContext):
         pass

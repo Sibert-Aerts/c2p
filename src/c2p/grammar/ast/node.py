@@ -1,6 +1,6 @@
 from typing import Any, List, Optional, Union, Tuple, Callable
 from ..ctypes import CArray, CConst, CChar, CInt, CPointer, CType, CVoid, CBool
-from ...codegen.environment import Environment
+from ...codegen.environment import Environment, FunctionRecord
 from ...codegen.code_node import CodeNode
 from ...ptypes import PAddress
 from ... import instructions
@@ -25,6 +25,20 @@ class ParameterDeclaration(ASTNode):
 
     def to_var(self) -> Tuple[CType, str]:
         return self.declarator.to_var(self.type)
+
+
+class FunctionDeclaration(ASTNode):
+    def __init__(self, where: SourceInterval, name: str, returnType: CType, parameters: List[ParameterDeclaration]) -> None:
+        super().__init__(where)
+        self.name = name
+        self.returnType = returnType
+        self.parameters = parameters
+
+    def to_code(self, env: Environment) -> CodeNode:
+        # `signature` is a list of CTypes
+        signature = [p.to_var()[0] for p in self.parameters]
+        env.declare_function(self.name, self.returnType, signature, self.where)
+        return CodeNode()
 
 
 class FunctionDefinition(ASTNode):
@@ -52,7 +66,7 @@ class FunctionDefinition(ASTNode):
         for t in signature:
             paramSpace += t.ptype().size()
 
-        label = env.register_function(name, returnType, signature, self.where)
+        label = env.declare_function(name, returnType, signature, self.where, isDefinition=True).label
 
         # Append the label pointing to this function
         code.add(label)
@@ -110,6 +124,9 @@ class Program(ASTNode):
                 functionCode.add(c)
                 code.foundMain = code.foundMain or c.foundMain
 
+        for k, v in env.scope.symbols.items():
+            if isinstance(v, FunctionRecord) and not v.defined:
+                raise self.semanticError('%s was declared but not defined.' % k)
         # the amount of space global variables take up is just the amount of space all vars in level 0 take up
         varSpace = env.scope.varSpace
         # make space for the global variables + frame header (5) + files! (4)

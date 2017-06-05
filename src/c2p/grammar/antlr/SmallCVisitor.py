@@ -14,6 +14,11 @@ class SmallCVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by SmallCParser#functionDeclaration.
+    def visitFunctionDeclaration(self, ctx:SmallCParser.FunctionDeclarationContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by SmallCParser#functionDefinition.
     def visitFunctionDefinition(self, ctx:SmallCParser.FunctionDefinitionContext):
         return self.visitChildren(ctx)

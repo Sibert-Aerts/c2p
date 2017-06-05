@@ -18,7 +18,8 @@ VariableRecord = NamedTuple('VariableRecord', [
 FunctionRecord = NamedTuple('FunctionRecord', [
     ('returnType', CType),
     ('signature', List[CType]),
-    ('label', str),
+    ('label', Label),
+    ('defined', bool),
 ])
 
 class Scope:
@@ -108,7 +109,7 @@ class Scope:
 
         self.symbols[name] = VariableRecord(ctype, ctype.ptype(), address, self.depth, isGlobal)
 
-    def _register_function(self, name: str, returnType: CType, signature: List[CType], where: SourceInterval) -> Label:
+    def _register_function(self, name: str, returnType: CType, signature: List[CType], where: SourceInterval, isDefinition: bool = False) -> Label:
         assert self.depth == 0, 'register_function not at global scope'
 
         # Check if the symbol is already defined in the current scope
@@ -117,7 +118,7 @@ class Scope:
 
         # Make a function record and register it
         label = Label('f_{}'.format(name))
-        self.symbols[name] = FunctionRecord(returnType, signature, label.label)
+        self.symbols[name] = FunctionRecord(returnType, signature, label, isDefinition)
         return label
 
     def _set_as_loop(self, br : str, cont : str) -> None:
@@ -191,9 +192,26 @@ class Environment:
         '''Registers a variable to the current scope.'''
         self.scope._register_variable(name, ctype, where)
 
-    def register_function(self, name: str, returnType: CType, signature: List[CType], where: SourceInterval) -> Label:
+    def register_function(self, name: str, returnType: CType, signature: List[CType], where: SourceInterval, isDefinition: bool = False) -> Label:
         '''Registers a function to the (global) scope and get its label.'''
-        return self.scope._register_function(name, returnType, signature, where)
+        return self.scope._register_function(name, returnType, signature, where, isDefinition)
+
+    def declare_function(self, name: str, returnType: CType, signature: List[CType],
+            where: SourceInterval, isDefinition: bool = False) -> FunctionRecord:
+        '''Registers a function to the (global) scope if it does not yet exist, and get its record.'''
+        try:
+            fr = self.get_function(name, where)
+        except SemanticError as e:
+            self.register_function(name, returnType, signature, where, isDefinition)
+            return self.get_function(name, where)
+
+        # OK, it already existed. Make sure we aren't redefining or conflicting.
+        if fr.returnType != returnType or fr.signature != signature:
+            raise SemanticError('Conflicting declaration of "%s"!' % name, where)
+        if isDefinition and fr.defined:
+            raise SemanticError('Redefinition of "%s"!' % name, where)
+        self.scope.symbols[name] = fr = fr._replace(defined=isDefinition)
+        return fr
 
     def set_as_loop(self, br : Label, cont : Label) -> None:
         '''Defines the current scope as a loop, and registers its 'break' and 'continue' labels.'''
