@@ -6,6 +6,7 @@ from ...codegen.error import SemanticError
 from ...ptypes import PAddress
 from ... import instructions
 from c2p.source_interval import SourceInterval
+from c2p.codegen.error import warn
 
 from .node_base import *
 from .node_expression import *
@@ -81,10 +82,12 @@ def init_to_code(env : Environment, name : str, init : Expression, where: Source
     # Evaluate the right expression and put it on the stack
     cinit = init.to_code(env)
 
-    if cinit.type.promotes_to(var.ctype):
-        code.add(cinit, var.ctype)
-    else:
-        raise SemanticError('Incompatible initialisation of {} as {}.'.format(var.ctype, cinit.type), where)
+    if not cinit.type.promotes_to(var.ctype):
+        if cinit.type.demotes_to(var.ctype):
+            warn('Possible loss of information in initialisation of {} as {}.'.format(var.ctype, cinit.type), where)
+        else:
+            raise SemanticError('Incompatible initialisation of {} as {}.'.format(var.ctype, cinit.type), where)
+    code.add(cinit, var.ctype)
 
     # Store the value
     code.add(instructions.Sto(var.ptype))

@@ -71,8 +71,12 @@ class OperationAssignment(ASTNode):
 
         cr = self.right.to_code(env)
         if not cr.type.promotes_to(cl.type):
-            raise self.semanticError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
-        code.add(cr, cr.type.common_promote(cl.type))
+            if cr.type.demotes_to(cl.type):
+                self.warn('Possible loss of information in conversion from {} to {}.'.format(cr.type, cl.type))
+            else:
+                raise self.semanticError('Incompatible assignment of {} to {}.'.format(cr.type, cl.type))
+
+        code.add(cr, cl.type)
 
         if isinstance(cl.type.ignoreConst(), CArray):
             raise self.semanticError('Cannot assign to unindexed arrays.')
@@ -535,12 +539,12 @@ class Index(ASTNode):
 
         # The index
         ci = self.index.to_code(env)
-        if ci.type.ignoreConst() != CInt():
+        if not ci.demotes_to(CInt()) or ci.promotes_to(CInt()):
             raise self.semanticError('Cannot use expression of type {} as index.'.format(ci.type))
 
         # Load array and index onto stack
         code.add(ca)
-        code.add(ci)
+        code.add(ci, CInt())
         # Find the offset from the base pointer
         itemSize = itemType.size()
         code.add(instructions.Ixa(itemSize))
@@ -619,9 +623,12 @@ class Call(ASTNode):
             # Add the code to load the argument onto the stack
             c = arg.to_code(env)
 
-            if not( c.type.promotes_to(sig) or c.type.equivalent(sig) ):
-                raise self.semanticError('Invalid call to "{}": Expected expression of type {} or less, got {}.' \
-                    .format(name, sig, c.type))
+            if not c.type.promotes_to(sig):
+                if c.type.demotes_to(sig):
+                    self.warn('Possible loss of information in conversion from {} to {} in call to {}.'.format(c.type, sig, name))
+                else:
+                    raise self.semanticError('Invalid call to "{}": Expected expression of type {} or less, got {}.' \
+                        .format(name, sig, c.type))
 
             code.add(c, sig)
 

@@ -6,6 +6,7 @@ from ...codegen.error import SemanticError
 from ... import instructions
 from ...codegen.error import ASTError
 from c2p.source_interval import SourceInterval
+from c2p.codegen.error import warn
 
 class ASTNode:
     def __init__(self, where: SourceInterval) -> None:
@@ -19,6 +20,9 @@ class ASTNode:
 
     def semanticError(self, message: Any) -> SemanticError:
         return SemanticError(message, self.where)
+
+    def warn(self, message: Any) -> None:
+        warn(message, self.where)
 
 # A list of all invalid identifiers
 keywords = ["void", "int", "void", "bool", "float", "if", "else", "where", "for", "break", "continue", "return", "const"]
