@@ -29,6 +29,11 @@ class CondStatement(ASTNode):
 
         ccond = self.condition.to_code(env)
         code.add(ccond)
+        if not ccond.type.equivalent(CBool()):
+            if ccond.type.demotes_to(CBool()):
+                code.add(instructions.Conv(ccond.type.ptype(), PBoolean))
+            else:
+                raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(cl.type))
         code.add(instructions.Fjp(falseLabel.label))
 
         ctrue = self.trueBody.to_code(env)
@@ -70,6 +75,11 @@ class WhileStatement(ASTNode):
 
         code.add(startLabel)
         code.add(ccond)
+        if not ccond.type.equivalent(CBool()):
+            if ccond.type.demotes_to(CBool()):
+                code.add(instructions.Conv(ccond.type.ptype(), PBoolean))
+            else:
+                raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(cl.type))
         code.add(instructions.Fjp(endLabel.label))
         code.add(cbody)
         code.add(instructions.Ujp(startLabel.label))
@@ -132,6 +142,11 @@ class ForStatement(ASTNode):
         code.add(startLabel)
         if self.center:
             code.add(ccond)
+            if not ccond.type.equivalent(CBool()):
+                if ccond.type.demotes_to(CBool()):
+                    code.add(instructions.Conv(ccond.type.ptype(), PBoolean))
+                else:
+                    raise self.semanticError('Attempted to use expression of type {} as a condition.'.format(cl.type))
             code.add(instructions.Fjp(endLabel.label))
         code.add(cbody)
         if self.right:
@@ -154,7 +169,7 @@ class BreakStatement(ASTNode):
 
         # Check if we're inside a loop or not
         if loopScope is None:
-            self.semanticError('Attempted to "break" outside a loop.')
+            raise self.semanticError('Attempted to "break" outside a loop.')
 
         code.add(instructions.Ujp(loopScope.breakLabel))
 
@@ -171,7 +186,7 @@ class ContinueStatement(ASTNode):
 
         # Check if we're inside a loop or not
         if loopScope is None:
-            self.semanticError('Attempted to "continue" outside a loop.')
+            raise self.semanticError('Attempted to "continue" outside a loop.')
 
         code.add(instructions.Ujp(loopScope.continueLabel))
 
@@ -186,15 +201,15 @@ class ReturnStatement(ASTNode):
         if self.expression:
             code = CodeNode()
             c = self.expression.to_code(env)
-            code.add(c)
 
-            # TODO: type compatibility
             # Ensure we're returning the right thing
-            if c.type.ignoreConst() != env.returnType.ignoreConst():
+            if not c.type.promotes_to(env.returnType):
                 raise self.semanticError('Attempted to return expression of type {}, expected {}.'.format(c.type, env.returnType))
 
+            code.add(c, env.returnType)
+
             # Put the return value where we can find it later: On top of the previous stack, where MP points to
-            code.add(instructions.Str(c.type.ptype(), 0, 0))
+            code.add(instructions.Str(env.returnType.ptype(), 0, 0))
             # Return with value
             code.add(instructions.Retf())
             return code

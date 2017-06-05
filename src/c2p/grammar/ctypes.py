@@ -29,6 +29,14 @@ class CType:
             return False
         return classOrder.index(s) <= classOrder.index(o)
 
+    def demotes_to(self, other : 'CType') -> bool:
+        '''Test whether converting to the given type causes loss.'''
+        s = self.ignoreConst().__class__
+        o = other.ignoreConst().__class__
+        if not (s in classOrder and o in classOrder):
+            return False
+        return classOrder.index(s) > classOrder.index(o)
+        
     def common_promote(self, other : 'CType') -> Optional['CType']:
         '''
         Finds the smallest type that both can be promoted to without loss.

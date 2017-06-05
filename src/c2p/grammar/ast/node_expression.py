@@ -173,14 +173,14 @@ class BinaryBooleanOperationNode(ASTNode):
 
         # Load the left hand side as an L-Value, right hand side as an R-Value
         cl = self.left.to_code(env)
-        code.add(cl)
         cr = self.right.to_code(env)
-        code.add(cr)
 
-        # TODO: boolean conversions.
+        # Cast the arguments to bool if needed and possible
         for c in (cl, cr):
-            if(c.type.ignoreConst() != CBool()):
-                raise self.semanticError('Attempted to use variable of type {} as a boolean.'.format(cl.type))
+            if not (c.type.equivalent(CBool()) or c.type.demotes_to(CBool())):
+                raise self.semanticError('Attempted to use expression of type {} as a boolean.'.format(c.type))
+            else:
+                code.add(c, CBool())
 
         code.add(self.operation())
 
@@ -210,15 +210,16 @@ class ComparisonNode(ASTNode):
         code = CodeNode()
 
         cl = self.left.to_code(env)
-        code.add(cl)
         cr = self.right.to_code(env)
-        code.add(cr)
 
-        # TODO: type compatibility & implicit casting logic!
-        if(cl.type.ignoreConst() != cr.type.ignoreConst()):
+        commonType = cl.type.common_promote(cr.type)
+        if commonType is None:
             raise self.semanticError('Invalid comparison {} between values of type of {} and {}.'.format(self.operation.__name__, cr.type, cl.type))
 
-        code.add(self.operation(cl.type.ptype()))
+        code.add(cl, commonType)
+        code.add(cr, commonType)
+
+        code.add(self.operation(commonType.ptype()))
 
         code.type = CBool()
         code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 1)
@@ -262,17 +263,18 @@ class BinaryNumericOperationNode(ASTNode):
         code = CodeNode()
 
         cl = self.left.to_code(env)
-        code.add(cl)
         cr = self.right.to_code(env)
-        code.add(cr)
 
-        # TODO: type compatibility & implicit casting logic!
-        if(cl.type.ignoreConst() != cr.type.ignoreConst()):
-            raise self.semanticError('Invalid operation {} between values of type of {} to {}.'.format(self.operation.__name__, cr.type, cl.type))
+        commonType = cl.type.common_promote(cr.type)
+        if commonType is None or isinstance(commonType, (CBool, CChar)):
+            raise self.semanticError('Invalid operation {} between values of type of {} and {}.'.format(self.operation.__name__, cr.type, cl.type))
 
-        code.add(self.operation(cl.type.ptype()))
+        code.add(cl, commonType)
+        code.add(cr, commonType)
 
-        code.type = cl.type
+        code.add(self.operation(commonType.ptype()))
+
+        code.type = commonType
         code.maxStackSpace = max(cl.maxStackSpace, cr.maxStackSpace + 1)
 
         return code
@@ -482,15 +484,15 @@ class LogicalNot(ASTNode):
         code = CodeNode()
 
         c = self.inner.to_code(env)
-        code.add(c)
 
-        # TODO: bool conversion
-        if c.type.ignoreConst() != CBool():
-            raise self.semanticError('Logical negation on expression of type {}, expected bool.'.format(c.type))
+        if not (c.type.equivalent(CBool()) or c.type.demotes_to(CBool())):
+            raise self.semanticError('Attempted to negate an expression of type {}, expected bool.'.format(c.type))
+        else:
+            code.add(c, CBool())
 
         code.add(instructions.Not())
 
-        code.type = c.type
+        code.type = CBool()
         code.maxStackSpace = c.maxStackSpace
 
         return code
@@ -595,12 +597,12 @@ class Call(ASTNode):
         for sig, arg in zip(signature, self.arguments):    # sig:CType, arg:Expression
             # Add the code to load the argument onto the stack
             c = arg.to_code(env)
-            code.add(c)
 
-            # TODO: Type compatibility
-            if c.type.ignoreConst() != sig.ignoreConst():
-                raise self.semanticError('Invalid call to "{}": Expected expression of type {}, got {}.' \
+            if not( c.type.promotes_to(sig) or c.type.equivalent(sig) ):
+                raise self.semanticError('Invalid call to "{}": Expected expression of type {} or less, got {}.' \
                     .format(name, sig, c.type))
+
+            code.add(c, sig)
 
         argSize = sum([s.ptype().size() for s in signature])
 

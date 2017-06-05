@@ -19,7 +19,7 @@ int sum(int (*x)[10]){
     return out;    
 }
 
-int main() {
+int main(){
     int x[10][20];
     int (*y)[20] = &x[4];
     x[4][15] = 201;
