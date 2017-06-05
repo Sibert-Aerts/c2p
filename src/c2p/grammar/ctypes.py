@@ -39,7 +39,6 @@ class CType:
         elif other.promotes_to(self):
             return self.ignoreConst()
         return None
-        return classOrder.index(s) <= classOrder.index(o)
 
     def ptype(self) -> PType:
         raise NotImplementedError()
