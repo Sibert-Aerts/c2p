@@ -16,7 +16,8 @@
         border: 1px solid #ABA;
         max-width: 100%;
     }
-    .code{
+    i{
+        font-style: normal;
         font-family: "Lucida Console", "Courier New";
         font-size: 14px;
         background-color: #DDF;
@@ -35,7 +36,7 @@
     
     <h3>Introductie</h3>
     <p>
-        Dit is de inzending voor fase 1 van het project voor het vak Compilers.<br>
+        Dit is de finale inzendending van het project voor het vak Compilers.<br>
         De groep bestaat uit Sibert Aerts en Lynn van Hauwe.
     </p>
 
@@ -47,17 +48,17 @@
             cd grammar<br>
             ./convert SmallC.g4
         </p>
-        (Dit komt simpelweg overeen met het compileren van de grammatica aan de hand van antlr, en vervolgens de gegenereerde bestanden in <span class="code">src/c2p/grammar/antlr</span> te plaatsen.)
+        (Dit komt simpelweg overeen met het compileren van de grammatica aan de hand van antlr, en vervolgens de gegenereerde bestanden in <i>src/c2p/grammar/antlr</i> te plaatsen.)
         </p>
         
-        Om een bestand <span class="code">code.c</span> te compileren dient de volgende code te worden uitgevoerd:
+        Om een bestand <i>code.c</i> te compileren dient de volgende code te worden uitgevoerd:
         <p class="code-box">
             python3 src/main.py code.c
         </p>
         Indien succesvol produceert dit 2 bestanden:
         <ul>
-            <li><span class="code">AST.dot</span>: De AST boom in DOT formaat.</li>
-            <li><span class="code">code.p</span>: De gecompileerde p-code.</li>
+            <li><i>AST.dot</i>: De AST boom in DOT formaat.</li>
+            <li><i>code.p</i>: De gecompileerde p-code.</li>
         </ul>
     </p>
 
@@ -66,30 +67,51 @@
         De compiler bevat al bijna elke noodzakelijke en optionele functionaliteit, de enige ontbrekende zijn:
 
         <ul>
-            <li>Het gebruik van <span class="code">printf</span> om geformatteerde variabelen te printen ontbreekt.</li>
-            <li><span class="code">scanf</span> ontbreekt volledig.</li>
-            <li>Controlleren of non-void functies noodzakelijk een <span class="code">return</span> statement tegenkomen.</li>
-            <li>Arrays kunnen nog niet gemaakt worden (behalve string constants), en werken dus praktisch niet.</li>
-            <li>Impliciete conversions ontbreken volledig.</li>
+            <li>Controlleren of non-void functies noodzakelijk een <i>return</i> statement tegenkomen.</li>
+            <li><i>printf</i> en <i>scanf</i> returnen <i>void</i> in plaats van <i>int</i>.</li>
+            <li>
+                <i>printf</i> en <i>scanf</i> accepteren als eerste argument enkel string literals, en geen variabelen.<br>
+                e.g. <i>printf(s, 10)</i> is nooit geldig, wat <i>s</i> ook is, maar <i>printf("%d", 10)</i> is wel geldig.
+            </li>
+            <li>Het <i>width</i> argument in de <i>%[width][code]</i> patronen in <i>printf</i> werkt enkel voor <i>%[width]f</i>, en bepaalt enkel het aantal cijfers na de komma.</li>
+            <li>Dynamische arrays, en assignment van volledige arrays of rows ontbreekt.</li>
+            <li>Initialisation en default initialisation van arrays ontbreekt, alsook het controlleren of een array geinitialiseerd is voor het gebruikt wordt.</li>
             <li>Optimisaties ontbreken volledig.</li>
         </ul>
     </p>
 
     <h3>Extra's:</h3>
     <p>
-        De enige ongevraagde extra functionaliteit die de compiler momenteel ondersteunt is het type <span class="code">bool</span>, 
-        en de constanten <span class="code">true</span> en <span class="code">false</span>.
+        Ongevraagde of onvermelde functionaliteiten die de compiler ondersteunt.
     </p>
+    <ul>
+        <li>De compiler ondersteunt het type <i>bool</i>, en de constanten <i>true</i> en <i>false</i>.</li>
+        <li>De compiler converteert numerieke waarden naar <i>bool</i> zonder warnings in bepaalde situaties.</li>
+        <li>
+            De compiler converteert impliciet multi-dimensionele arrays naar pointers bij assignments of functie calls.<br>
+            e.g. <i>int i[10][10]; int* j = i;</i> is geldig
+        </li>
+    </ul>
 
     <h3>Grammatica:</h3>
     <ul>
-        <li>De grammatica bevindt zich in <span class="code">grammar/SmallC.g4</span>.</li>
-        <li>De antlr gegenereerde code wordt in <span class="code">src/c2p/grammar/antlr/</span> geplaatst.</li>
+        <li>De grammatica bevindt zich in <i>grammar/SmallC.g4</i>.</li>
+        <li>De antlr gegenereerde code wordt in <i>src/c2p/grammar/antlr/</i> geplaatst.</li>
     </ul>
 
     <h3>Tests:</h3>
     <p>
-        Om de tests uit te voeren dient men de volgende code uit te voeren vanuit de <span class="code">src/</span> directory:
+        Om de functionaliteit van de voorbeeldbestanden in <i>src/test/</i> automatisch af te lopen:
+        Plaats eerst de <i>Pmachine</i> executable in <i>src/</i>.
+        Voer vervolgens vanuit <i>src/</i> het volgende commando uit:
+        <p class="code-box">
+            ./run_tests.sh
+        </p>
+        Dit compileert automatisch de meeste bestanden in <i>src/test/</i> en voert ze uit aan de hand van de P-Machine.
+        De bestanden bevatten hun eigen assertion methodes die automatisch nagaan of alles werkt zoals verwacht.
+    </p>
+    <p>
+        Om de unit tests uit te voeren dient men de volgende code uit te voeren vanuit de <i>src/</i> directory:
         <p class="code-box">
             python3 -m unittest
         </p>
@@ -97,23 +119,20 @@
 
     </p>
     <ul>
-        <li><span class="code">src/c2p/grammar/test_ctypes.py</span>: Tests op de CType klasse.</li>
-        <li><span class="code">src/c2p/codegen/test_semantic_errors.py</span>: Tests op de Semantische analyse tijdens de codegen, 
-        op basis van de voorbeeldbestanden in <span class="code">src/test/wrong</span>.</li>
-        <li><span class="code">src/c2p/instructions/test_instructions.py</span>: Tests op de klassen voor verschillende p-instructies.</li>
+        <li><i>src/c2p/grammar/test_ctypes.py</i>: Tests op de CType klasse.</li>
+        <li><i>src/c2p/codegen/test_semantic_errors.py</i>: Tests op de Semantische analyse tijdens de codegen, 
+        op basis van de voorbeeldbestanden in <i>src/test/wrong</i>.</li>
+        <li><i>src/c2p/instructions/test_instructions.py</i>: Tests op de klassen voor verschillende p-instructies.</li>
         <li>
-            <span class="code">src/c2p/grammar/ast/test_visitor.py</span>: Tests de Visitor en de acceptatie van syntactisch correcte code, 
-            op basis van de voorbeeldbestanden in <span class="code">src/c2p/grammar/ast/test</span>. <br>
+            <i>src/c2p/grammar/ast/test_visitor.py</i>: Tests de Visitor en de acceptatie van syntactisch correcte code, 
+            op basis van de voorbeeldbestanden in <i>src/c2p/grammar/ast/test</i>. <br>
             (Merk op dat geen van deze bestanden correcte code produceert, en dat deze tests enkel voor syntactische correctheid test.)
         </li>
     </ul>
 
     <h3>Voorbeelden</h3>
     <p>
-        Reeds correct compilerende voorbeeldbestanden bevinden zich in <span class="code">src/test</span>.<br>
-        Om de correctheid van de gegenereerde code te controlleren moet men nog wel manueel de inhoud van de stack na de uitvoering bekijken.
-        Ieder bestand beschrijft in zijn commentaar de waarden die elke variabele zou moeten bevatten aan het einde van de uitvoering.
-        Aangezien variabelen in dezelfde volgorde op de stack komen als dat ze gedeclareerd zijn, is het praktisch niet moeilijk om de correctheid na te gaan.<br>
+        Correct compilerende voorbeeldcode bevindt zich in <i>src/test</i>.<br>
     </p>
 
 </body>
