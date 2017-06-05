@@ -3,16 +3,18 @@ import c2p
 import traceback
 
 from antlr4 import * # type: ignore
+from antlr4.error.ErrorListener import ErrorListener # type: ignore
 from c2p.grammar.antlr.SmallCLexer import SmallCLexer
 from c2p.grammar.antlr.SmallCParser import SmallCParser
 from c2p.grammar.ast.visitor import ASTVisitor
 from c2p.grammar.ast.visualize import Visualizer
 from c2p.codegen.environment import Environment
-from c2p.codegen.error import PositionalError
+from c2p.codegen.error import PositionalError, warn
+from c2p.error_listener import ParserSyntaxErrorListener
 
 def to_file(filename, text):
-    f = open(filename, 'w')
-    f.write(text)
+    with open(filename, 'w') as f:
+        f.write(text)
 
 def run(argv):
     if len(argv) < 2:
@@ -20,7 +22,12 @@ def run(argv):
 
     inputStream = FileStream(argv[1])
     parser = SmallCParser(CommonTokenStream(SmallCLexer(inputStream)))
-    tree = parser.program()
+    parser.removeErrorListeners()
+    parser.addErrorListener(ParserSyntaxErrorListener())
+    try:
+        tree = parser.program()
+    except PositionalError as e:
+        sys.exit(e.pretty_print(inputStream))
 
     action = ''
     try:
@@ -42,26 +49,7 @@ def run(argv):
         print('Code generation successful. Output written to \'{}\''.format(codeFileName))
 
     except PositionalError as e:
-        # XXX make this less ugly ;-;
-        sL = e.where.start.line - 1
-        sC = e.where.start.column
-        eL = e.where.stop.line - 1
-        eC = e.where.stop.column + 1
-
-        lines = inputStream.strdata.split('\n')
-        HIGHLIGHT = '\x1b[31m'
-        RESET = '\x1b[0m'
-        lines[sL] = lines[sL][:sC] + HIGHLIGHT + lines[sL][sC:]
-        if sL == eL:
-            eC += len(HIGHLIGHT)
-        lines[eL] = lines[eL][:eC] + RESET + lines[eL][eC:]
-
-        sys.stderr.write('\nError in file %s:\n' % argv[1])
-        for i, l in list(enumerate(lines, 1))[sL - 1 : eL + 2]:
-            sys.stderr.write('\x1b[33;1m%4d \x1b[0m%s\n' % (i, l))
-
-        sys.stderr.write(HIGHLIGHT + str(e) + RESET + '\n\n')
-
+        sys.exit(e.pretty_print(inputStream))
     except ValueError as e:
         # Don't print a gigantic stack trace each time.
         exceptiondata = traceback.format_exc().splitlines()
