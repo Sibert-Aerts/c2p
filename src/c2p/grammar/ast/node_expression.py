@@ -539,7 +539,7 @@ class Index(ASTNode):
 
         # The index
         ci = self.index.to_code(env)
-        if not ci.demotes_to(CInt()) or ci.promotes_to(CInt()):
+        if not (ci.type.demotes_to(CInt()) or ci.type.promotes_to(CInt())):
             raise self.semanticError('Cannot use expression of type {} as index.'.format(ci.type))
 
         # Load array and index onto stack
