@@ -10,13 +10,43 @@ import re
 Expression = Any
 
 def string_scan_loop(node: CodeNode):
-    # TODO
-    # assert node.type.ignoreConst() == CArray(CChar()) or node.type.ignoreConst() == CPointer(CChar())
-    raise NotImplementedError
-
     code = CodeNode()
+    loop_label = Label('scanf_loop')
+    done_label = Label('scanf_done')
+
+    ################################### Stack after this opcode: #
+    ##############################################################
+    # Push address to write to.
+    code.add(node)                    # q
+    code.add(loop_label)              # q
+    # Dpl address and read a character.
+    code.add(Dpl(PAddress))           # q, q
+    code.add(In(PCharacter))          # q, q, c
+
+    # If it's ESC (ASCII 27), jump to done.
+    code.add(Dpl(PCharacter))         # q, q, c, c
+    code.add(Ldc(PCharacter, 27))     # q, q, c, c, 27
+    code.add(Neq(PCharacter))         # q, q, c, c != 27
+    code.add(Fjp(done_label.label))   # q, q, c
+
+    # Write it to the array.
+    code.add(Sto(PCharacter))         # q
+    code.add(Inc(PAddress, 1))        # q+1
+    code.add(Ujp(loop_label.label))
+
+    code.add(done_label)              # q, q, c
+    # Write a NULL byte.
+    code.add(Ldc(PCharacter, 0))      # q, q, c, 0
+    code.add(Sli(PCharacter))         # q, q, 0
+    code.add(Sto(PCharacter))         # q
+
+    # Discard a value.
+    code.add(Dpl(PCharacter))
+    code.add(Equ(PCharacter))
+    code.add(Fjp(done_label.label))
+
     code.type = CVoid()
-    code.maxStackSpace = 5
+    code.maxStackSpace = 6
     return code
 
 def to_code(arguments: List[Expression], env: Environment, where: SourceInterval):

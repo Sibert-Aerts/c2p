@@ -3,7 +3,7 @@ int main() {
 	int x;
 	char y;
 	float z;
-	scanf("%d%c%f", &x, &y, &z);
+	scanf("%s%c%f", &x, &y, &z);
 	printf("You typed: %d %c %f\n", x, y, z);
 	return 0;
 }

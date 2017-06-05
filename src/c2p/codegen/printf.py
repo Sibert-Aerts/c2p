@@ -11,7 +11,6 @@ import re
 Expression = Any
 
 def string_print_loop(node: CodeNode):
-    assert node.type.ignoreConst() == CArray(CChar()) or node.type.ignoreConst() == CPointer(CChar())
     loop_label = Label('printf_loop')
     done_label = Label('printf_done')
 
@@ -74,7 +73,8 @@ def to_code(arguments: List[Expression], env: Environment, where: SourceInterval
     for token in tokens:
         if token == '%s':
             node = arguments[i].to_code(env)
-            if node.type.ignoreConst() != CArray(CChar()) and node.type.ignoreConst() != CPointer(CChar()):
+            t = node.type.ignoreConst()
+            if not (isinstance(t, CArray) and t.t == CChar() or node.type.ignoreConst() == CPointer(CChar())):
                 raise SemanticError('%s matched up with {} in printf.'.format(node.type), where)
             code.add(string_print_loop(node))
             i += 1
